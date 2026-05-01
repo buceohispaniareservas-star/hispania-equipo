@@ -1,4 +1,4 @@
-<OCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -398,7 +398,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <button class="hbtn" onclick="openChat()" title="Mensajes" style="position:relative">✉️
           <span class="nbadge" id="chatBadge" style="border-color:#0F6E56"></span>
         </button>
-        <button class="hbtn" onclick="switchTab('averias')" title="Averías" style="position:relative">🔧
+        <button class="hbtn" onclick="switchTab('averias')" title="Averías" style="position:relative;display:none">🔧
           <span class="nbadge" id="nBadge"></span>
         </button>
       </div>
@@ -1163,15 +1163,19 @@ function renderMyReservations(){
     const selCount=selSet.size;
     const totalItems=(r.items||[]).length;
 
-    const regsHtml=(r.items||[]).map(num=>{
-      const isKo=!!koMap[num];
+    // Only show non-KO items - KO items disappear completely from Mis Reservas
+    const activeItems = (r.items||[]).filter(num=>!koMap[num]);
+    const koItems = (r.items||[]).filter(num=>!!koMap[num]);
+    const koHtml = '';
+
+    const regsHtml = activeItems.map(num=>{
       const isSel=selSet.has(num);
       return`<div class="reg-item${isSel?' sel-ret':''}" id="ri_${id}_${num}">
-        <div class="rnum ${isKo?'ko':''}">${num}</div>
-        <span class="rlbl">${r.tipo} ${num}${isKo?' ⚡':''}</span>
+        <div class="rnum">${num}</div>
+        <span class="rlbl">${r.tipo} ${num}</span>
         <div class="okko">
-          <button class="${isKo?'ok-off':'ok-on'}" onclick="setItemKo('${id}',${num},false)">OK</button>
-          <button class="${isKo?'ko-on':'ko-off'}" onclick="openKoModal('${id}',${num},'${r.tipo}','${r.instructor}','${r.activity}')">${isKo?'KO ⚡':'KO'}</button>
+          <button class="ok-on" onclick="setItemKo('${id}',${num},false)">OK ✓</button>
+          <button class="ko-off" onclick="openKoModal('${id}',${num},'${r.tipo}','${r.instructor}','${r.activity}')">KO</button>
         </div>
         <div class="ret-chk${isSel?' checked':''}" onclick="toggleReturnSel('${id}',${num})" title="Marcar para devolver">${isSel?'✓':''}</div>
       </div>`;
@@ -1228,6 +1232,7 @@ function renderMyReservations(){
         Equipos — toca ✓ para marcar devolución
       </div>
       ${retActionsHtml}
+      <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--mut);margin-bottom:6px">Equipos activos</div>
       ${regsHtml}
       <button class="btn-ghost" style="margin-top:10px" onclick="returnReservation('${id}')">✓ Devolver TODOS y cerrar reserva</button>
     </div>`;
