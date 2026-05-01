@@ -303,6 +303,70 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .msg-delete{position:absolute;bottom:10px;right:12px;background:none;border:none;font-size:16px;color:var(--mut);cursor:pointer;opacity:.5;padding:2px 5px}
 .msg-delete:active{opacity:1}
 .unread-badge-pill{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(180deg,#4a9de8,#2473c8);color:#fff;border-radius:10px;padding:3px 10px;font-size:11px;font-weight:800;box-shadow:0 2px 0 #1a5ea0}
+
+/* ═══ PIN ═══ */
+.pdot{width:16px;height:16px;border-radius:50%;border:2.5px solid #5DCAA5;background:transparent;transition:background .15s}
+.pdot.filled{background:#5DCAA5}
+.pin-key{padding:16px;border-radius:14px;border:none;font-size:20px;font-weight:800;cursor:pointer;background:rgba(255,255,255,.12);color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.25);transition:transform .1s,box-shadow .1s;-webkit-tap-highlight-color:transparent}
+.pin-key:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.2)}
+.pin-del{background:rgba(239,159,39,.3);color:#EF9F27}
+.pin-cancel{background:rgba(226,75,74,.3);color:#f5a5a5}
+
+/* ═══ HISTORIAL ═══ */
+.h-unit{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:12px;padding:11px 13px;margin-bottom:8px;border:1.5px solid var(--brd);cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,.05);transition:transform .1s}
+.h-unit:active{transform:scale(.98)}
+.h-unum{border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
+.h-unum-ok{background:linear-gradient(180deg,#c8f0d4,#8ed5a0);color:#1a5c2a;box-shadow:0 3px 0 #4a9460}
+.h-unum-ko{background:linear-gradient(180deg,#f07070,#c93232);color:#fff;box-shadow:0 3px 0 #8f1f1f}
+.h-unum-new{background:#f3f4f6;color:var(--mut);border:1.5px solid var(--brd)}
+.h-uinfo{flex:1}
+.h-uname{font-size:14px;font-weight:700;color:var(--txt)}
+.h-ulast{font-size:11px;color:var(--mut);margin-top:2px}
+.h-arrow{font-size:16px;color:var(--mut)}
+.ht-item{position:relative;margin-bottom:12px}
+.ht-dot{position:absolute;left:-20px;top:6px;width:12px;height:12px;border-radius:50%;border:2.5px solid var(--gy)}
+.ht-ok{background:#1D9E75}.ht-rep{background:#EF9F27}.ht-ko{background:#E24B4A}.ht-prev{background:#3b82f6}.ht-otro{background:#8b5cf6}
+.ht-card{background:var(--card);border-radius:10px;padding:11px 13px;border:1.5px solid var(--brd)}
+.ht-date{font-size:11px;color:var(--mut);font-weight:600;margin-bottom:3px}
+.ht-type{font-size:14px;font-weight:700;color:var(--txt)}
+.ht-note{font-size:12px;color:var(--mut);margin-top:4px;line-height:1.4;font-style:italic}
+.fg{margin-bottom:0}
+
+/* Historial grid — amber for "revisar" state */
+.reg.hist-am{background:linear-gradient(180deg,#ffe5ab,#f5c460);color:#633806;border:1px solid #e8b84b;box-shadow:0 3px 0 #9a6005}
+
+/* ═══ HISTORIAL GRID ═══ */
+.hgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+.hreg{border-radius:10px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;user-select:none;position:relative;transition:transform .1s;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+.hreg:active{transform:scale(.9)}
+.hreg-n{font-size:15px;font-weight:800;line-height:1}
+.hreg-dot{position:absolute;bottom:4px;right:5px;font-size:7px;opacity:.7}
+.hreg-ok{background:linear-gradient(180deg,#c8f0d4,#7ec893);color:#1a5c2a;border:1px solid #6ab87c;box-shadow:0 3px 0 #3d8c4d}
+.hreg-ko{background:linear-gradient(180deg,#f07070,#c93232);color:#fff;border:1px solid #a02525;box-shadow:0 3px 0 #7a1515}
+.hreg-am{background:linear-gradient(180deg,#ffe5ab,#f5c460);color:#633806;border:1px solid #e8b84b;box-shadow:0 3px 0 #9a6005}
+.hreg-new{background:#f3f4f6;color:#9ca3af;border:1.5px solid #e5e7eb;box-shadow:0 2px 0 #d1d5db}
+
+/* ═══ SCROLL HINT ═══ */
+#scrollHint{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  background:rgba(13,104,69,.88);
+  border-radius:20px;
+  padding:18px 28px;
+  z-index:250;
+  pointer-events:none;
+  backdrop-filter:blur(4px);
+  border:1.5px solid rgba(93,202,165,.5);
+}
+#scrollHint .sh-arr{font-size:32px;color:#fff;animation:bounceDown 1s ease infinite}
+#scrollHint .sh-txt{font-size:15px;font-weight:800;color:#fff;letter-spacing:.8px;text-transform:uppercase}
+@keyframes bounceDown{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
 </style>
 </head>
 <body>
@@ -358,6 +422,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="tab" data-tab="averias" onclick="switchTab('averias')">
         <span class="tab-icon">🔧</span><span class="tab-lbl">Averías</span>
       </div>
+      <div class="tab" data-tab="historial" onclick="switchTab('historial')">
+        <span class="tab-icon">📖</span><span class="tab-lbl">Historial</span>
+      </div>
     </div>
   </div>
 
@@ -406,15 +473,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
   <!-- ── ESTADO ── -->
   <div class="page" id="page-estado">
-    <div class="stat-row" id="statsRow"></div>
+    <div class="tipo-block" style="margin-bottom:14px">
+      <span class="lbl" style="margin-bottom:9px">Tipo de equipo</span>
+      <div class="tipo-row" id="estadoTipoRow"></div>
+    </div>
+    <div class="stat-row" style="grid-template-columns:repeat(3,1fr)" id="statsRow"></div>
     <div class="sec-t">Reservas activas</div>
     <div id="activeResList"></div>
-    <div class="sec-t">Vista global</div>
+    <div class="sec-t" id="estadoGridTitle">Vista global</div>
     <div class="legend">
       <div class="li"><div class="ld" style="background:linear-gradient(#c8f0d4,#7ec893);border:1px solid #6ab87c"></div>Libre</div>
       <div class="li"><div class="ld" style="background:linear-gradient(#ffd5d5,#f5a5a5)"></div>En uso</div>
-      <div class="li"><div class="ld" style="background:linear-gradient(#f07070,#c93232)"></div>KO</div>
-      <div class="li"><div class="ld" style="background:#e5e7eb;border:1px solid #d1d5db"></div>Baja</div>
+      <div class="li"><div class="ld" style="background:linear-gradient(#f07070,#c93232)"></div>KO ⚡</div>
     </div>
     <div class="rgrid" id="statusGrid"></div>
   </div>
@@ -433,6 +503,51 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div id="fixedList"></div>
   </div>
 </div>
+
+
+  <!-- ── HISTORIAL ── -->
+  <div class="page" id="page-historial">
+    <div id="histListView">
+      <div id="histTipoRow" class="tipo-row" style="margin-bottom:10px"></div>
+      <div id="histSubtitle" style="font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px"></div>
+      <div class="legend" style="margin-bottom:8px">
+        <div class="li"><div class="ld" style="background:linear-gradient(#c8f0d4,#8ed5a0);border:1px solid #6ab87c"></div>Revisado OK</div>
+        <div class="li"><div class="ld" style="background:linear-gradient(#f07070,#c93232)"></div>KO / Avería</div>
+        <div class="li"><div class="ld" style="background:linear-gradient(#ffe5ab,#f5c460)"></div>Reparación</div>
+        <div class="li"><div class="ld" style="background:#e5e7eb;border:1px solid #d1d5db"></div>Sin registro</div>
+      </div>
+      <div id="histGrid" class="hgrid"></div>
+    </div>
+    <div id="histDetailView" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <button onclick="histBack()" style="background:var(--card);border:1.5px solid var(--brd);border-radius:11px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.08)">← Volver</button>
+        <div>
+          <div style="font-size:17px;font-weight:800;color:var(--txt)" id="histDetailTitle"></div>
+          <div style="font-size:11px;color:var(--mut)" id="histDetailCount"></div>
+        </div>
+      </div>
+      <div class="card" style="border-left:4px solid var(--gb);margin-bottom:14px">
+        <span class="lbl" style="margin-bottom:10px">Añadir revisión o reparación</span>
+        <span class="lbl" style="margin-top:8px">Tipo de registro</span>
+        <select class="fsel" id="histRecType" style="margin-bottom:10px">
+          <option value="revision">✅ Revisión anual</option>
+          <option value="reparacion">🔧 Reparación</option>
+          <option value="averia">⚡ Avería</option>
+          <option value="preventivo">🛠️ Mantenimiento preventivo</option>
+          <option value="otro">📝 Otro</option>
+        </select>
+        <span class="lbl">Fecha</span>
+        <input type="date" class="fsel" id="histRecDate" style="margin-bottom:10px">
+        <span class="lbl">Observaciones</span>
+        <textarea class="fsel" id="histRecNotes" rows="2" style="resize:none;margin-bottom:12px;font-family:inherit" placeholder="Descripción del trabajo realizado..."></textarea>
+        <button class="btn-green" onclick="saveHistRecord()" style="padding:13px;font-size:14px">💾 Guardar registro</button>
+      </div>
+      <div class="sec-t">Historial de esta unidad</div>
+      <div id="histTimeline" style="padding-left:26px;position:relative">
+        <div style="position:absolute;left:9px;top:0;bottom:0;width:2px;background:var(--brd);border-radius:1px"></div>
+      </div>
+    </div>
+  </div>
 
 <!-- ── TAKEN POPUP ── -->
 <div class="overlay" id="takenOverlay" onclick="if(event.target===this)closeOverlay('takenOverlay')">
@@ -470,6 +585,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <button class="btn-red" style="flex:2;padding:13px" onclick="confirmKo()">⚡ Confirmar avería</button>
     </div>
   </div>
+</div>
+
+<!-- ── PIN OVERLAY ── -->
+<div id="pinOverlay" style="display:none;position:fixed;inset:0;background:linear-gradient(160deg,#14856A,#085041 60%,#04342C);z-index:450;flex-direction:column;align-items:center;justify-content:center;padding:32px">
+  <div style="font-size:48px;margin-bottom:16px">🔒</div>
+  <div style="font-size:20px;font-weight:800;color:#fff;margin-bottom:6px">Área de encargados</div>
+  <div style="font-size:13px;color:#9FE1CB;margin-bottom:28px;text-align:center">Introduce el PIN de 4 dígitos</div>
+  <div id="pinDots" style="display:flex;justify-content:center;gap:14px;margin-bottom:28px">
+    <div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div>
+  </div>
+  <div id="pinError" style="font-size:13px;color:#f5a5a5;font-weight:700;margin-bottom:16px;min-height:20px;text-align:center"></div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:260px">
+    <button class="pin-key" onclick="pinKey('1')">1</button>
+    <button class="pin-key" onclick="pinKey('2')">2</button>
+    <button class="pin-key" onclick="pinKey('3')">3</button>
+    <button class="pin-key" onclick="pinKey('4')">4</button>
+    <button class="pin-key" onclick="pinKey('5')">5</button>
+    <button class="pin-key" onclick="pinKey('6')">6</button>
+    <button class="pin-key" onclick="pinKey('7')">7</button>
+    <button class="pin-key" onclick="pinKey('8')">8</button>
+    <button class="pin-key" onclick="pinKey('9')">9</button>
+    <button class="pin-key pin-cancel" onclick="closePinOverlay()">✕</button>
+    <button class="pin-key" onclick="pinKey('0')">0</button>
+    <button class="pin-key pin-del" onclick="pinDel()">⌫</button>
+  </div>
+  <div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:24px">PIN por defecto: 1234 · cámbialo en Ajustes</div>
 </div>
 
 <!-- ── SETTINGS ── -->
@@ -512,6 +653,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <select class="fsel" id="osType" style="margin-bottom:0;flex:1" onchange="populateOsNums()"><option value="">Tipo...</option></select>
         <select class="fsel" id="osNum" style="margin-bottom:0;flex:1"><option value="">Nº...</option></select>
         <button onclick="addOutOfService()" style="background:linear-gradient(180deg,#f07070,#c93232);color:#fff;border:none;border-radius:10px;padding:10px 12px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 3px 0 #8f1f1f;white-space:nowrap">Dar baja</button>
+      </div>
+    </div>
+    <div class="set-sec">
+      <h3>🔒 PIN de acceso a Ajustes</h3>
+      <div style="font-size:12px;color:var(--mut);margin-bottom:8px">PIN actual: <b id="pinDisplay">••••</b></div>
+      <div style="display:flex;gap:8px">
+        <input id="pinNewInput" type="number" maxlength="4" placeholder="Nuevo PIN (4 dígitos)" style="flex:1;background:var(--gy);border:1.5px solid var(--brd);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit">
+        <button onclick="changePin()" style="background:linear-gradient(180deg,#22b584,#13865B);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 3px 0 #0a5c3f;white-space:nowrap">Cambiar</button>
       </div>
     </div>
     <button onclick="closeOverlay('settingsOverlay');saveSettings()" style="width:100%;background:linear-gradient(180deg,#22b584,#13865B);color:#fff;border:none;border-radius:13px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #0a5c3f;margin-top:8px">Guardar y cerrar</button>
@@ -567,6 +716,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   </div>
 </div>
 
+<div id="scrollHint">
+  <div class="sh-arr">↑</div>
+  <div class="sh-txt">Desliza</div>
+</div>
 <div id="toast"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
@@ -640,6 +793,7 @@ function initFirebase(){
       appData.regStatus    = data.regStatus    || {};
       appData.messages     = data.messages     || {};
       if(data.settings) appData.settings = {...appData.settings, ...data.settings};
+      if(data.historial) appData.historial = data.historial;
       saveLocal(); renderAll(); updateChatBadge();
     });
   } catch(e){ console.warn(e); initLocal(); }
@@ -657,10 +811,18 @@ function fbRemove(path){ if(useFirebase&&db) db.ref('hispania/'+path).remove(); 
 // ── LOCAL STORAGE ──
 function saveLocal(){ try{ localStorage.setItem('hispania_equipo', JSON.stringify(appData)); }catch(e){} }
 function loadLocal(){
-  try{ const r=localStorage.getItem('hispania_equipo'); if(r){ const d=JSON.parse(r); appData={...appData,...d}; } }catch(e){}
+  try{
+    const r=localStorage.getItem('hispania_equipo');
+    if(r){
+      const d=JSON.parse(r);
+      // Deep merge settings to preserve defaults for missing keys
+      if(d.settings) d.settings = {...appData.settings, ...d.settings};
+      appData={...appData,...d};
+    }
+  }catch(e){}
   if(!appData.settings.instructors.length) appData.settings.instructors=['Carlos García','Laura Martínez','Pedro Sánchez','Ana López','Miguel Torres'];
   if(!appData.settings.activities.length) appData.settings.activities=['Fun Dive','Refresh','Curso','Bautismo'];
-  if(!appData.settings.tipos.length) appData.settings.tipos=[{name:'Reguladores',count:50},{name:'Chalecos BCD',count:20}];
+  if(!appData.settings.tipos || !appData.settings.tipos.length) appData.settings.tipos=[{name:'Reguladores',count:50},{name:'Chalecos BCD',count:20}];
   if(!appData.settings.outOfService) appData.settings.outOfService=[];
   if(!appData.messages) appData.messages={};
 }
@@ -747,10 +909,32 @@ function switchTab(name){
   if(name==='misreservas') renderMyReservations();
   if(name==='averias') renderAverias();
   if(name==='estado') renderEstado();
+  if(name==='historial'){
+    const lv=document.getElementById('histListView');
+    const dv=document.getElementById('histDetailView');
+    if(lv) lv.style.display='block';
+    if(dv) dv.style.display='none';
+    histUnitSel=null;
+    initHistTipo();
+    // Scroll page to top
+    const ph = document.getElementById('page-historial');
+    if(ph) ph.scrollTop=0;
+    window.scrollTo(0,0);
+    setTimeout(renderHistPage, 20);
+  }
 }
 
 // ── RENDER ALL ──
-function renderAll(){ renderGrid(); renderEstado(); renderMyReservations(); renderAverias(); updateNotifBadge(); renderAvisoVence(); }
+function renderAll(){
+  renderGrid();
+  renderEstado();
+  renderMyReservations();
+  renderAverias();
+  updateNotifBadge();
+  renderAvisoVence();
+  const hp = document.getElementById('page-historial');
+  if(hp && hp.classList.contains('on')) renderHistPage();
+}
 
 // ── POPULATE FORM ──
 function populateFormSelects(){
@@ -901,20 +1085,39 @@ function extendFromAviso(id){
 }
 
 // ── ESTADO ──
-function renderEstado(){
-  let free=0,inUse=0,ko=0,out=0;
-  appData.settings.tipos.forEach(t=>{
-    for(let i=1;i<=t.count;i++){
-      const s=getItemState(t.name,i);
-      if(s.state==='free') free++;
-      else if(s.state==='taken') inUse++;
-      else if(s.state==='ko') ko++;
-      else out++;
-    }
+let estadoTipoSel = '';
+function setEstadoTipo(t){
+  estadoTipoSel = t;
+  document.querySelectorAll('#estadoTipoRow .ttab:not(.add)').forEach(el=>el.classList.toggle('on',el.textContent===t));
+  renderEstado();
+}
+function renderEstadoTipoRow(){
+  const row = document.getElementById('estadoTipoRow');
+  if(!row) return;
+  row.innerHTML = '';
+  appData.settings.tipos.forEach((t,i)=>{
+    if(!estadoTipoSel && i===0) estadoTipoSel = t.name;
+    const div = document.createElement('div');
+    div.className = 'ttab'+(t.name===estadoTipoSel?' on':'');
+    div.textContent = t.name;
+    div.onclick = ()=>setEstadoTipo(t.name);
+    row.appendChild(div);
   });
+}
+function renderEstado(){
+  renderEstadoTipoRow();
+  const tipoObj = appData.settings.tipos.find(t=>t.name===estadoTipoSel) || appData.settings.tipos[0];
+  if(!tipoObj){ estadoTipoSel=''; return; }
+  let free=0,inUse=0,ko=0;
+  for(let i=1;i<=tipoObj.count;i++){
+    const s=getItemState(tipoObj.name,i);
+    if(s.state==='free') free++;
+    else if(s.state==='taken') inUse++;
+    else if(s.state==='ko') ko++;
+  }
   document.getElementById('statsRow').innerHTML=[
     {n:free,l:'Libres',c:'#1a5c2a'},{n:inUse,l:'En uso',c:'#791F1F'},
-    {n:ko,l:'Avería KO',c:'#E24B4A'},{n:out,l:'Baja',c:''}
+    {n:ko,l:'Avería KO',c:'#E24B4A'}
   ].map(s=>`<div class="stat"><div class="stat-n" style="color:${s.c||'var(--txt)'}">${s.n}</div><div class="stat-l">${s.l}</div></div>`).join('');
   const t=today();
   const active=Object.entries(appData.reservations).filter(([,r])=>!r.returned&&r.endDate>=t).sort((a,b)=>a[1].instructor.localeCompare(b[1].instructor));
@@ -935,18 +1138,17 @@ function renderEstado(){
         </div>
       </div></div>`;
     }).join('');
-  // Status grid (first tipo only)
+  // Status grid — filtered by selected tipo
   const sg=document.getElementById('statusGrid'); sg.innerHTML='';
-  const firstTipo=appData.settings.tipos[0];
-  if(firstTipo){
-    for(let i=1;i<=firstTipo.count;i++){
-      const info=getItemState(firstTipo.name,i);
-      let cls='reg ';
-      if(info.state==='free') cls+='free'; else if(info.state==='taken') cls+='taken'; else if(info.state==='ko') cls+='ko'; else cls+='out';
-      const el=document.createElement('div'); el.className=cls; el.innerHTML=i+(info.state==='ko'?'<span class="ko-dot">⚡</span>':'');
-      el.onclick=()=>{ if(info.state!=='free') showTakenPopup(i,info); };
-      sg.appendChild(el);
-    }
+  const gt = document.getElementById('estadoGridTitle');
+  if(gt) gt.textContent = 'Vista global — '+tipoObj.name+' ('+tipoObj.count+' unidades)';
+  for(let i=1;i<=tipoObj.count;i++){
+    const info=getItemState(tipoObj.name,i);
+    let cls='reg ';
+    if(info.state==='free') cls+='free'; else if(info.state==='taken') cls+='taken'; else if(info.state==='ko') cls+='ko'; else cls+='out';
+    const el=document.createElement('div'); el.className=cls; el.innerHTML=i+(info.state==='ko'?'<span class="ko-dot">⚡</span>':'');
+    el.onclick=()=>{ if(info.state!=='free') showTakenPopup(i,info); };
+    sg.appendChild(el);
   }
 }
 
@@ -1192,9 +1394,53 @@ function updateNotifBadge(){
 }
 
 // ── SETTINGS ──
+let _pinEntry = '';
 function openSettings(){
-  updateSettingsTags(); populateOsDropdowns();
-  document.getElementById('settingsOverlay').classList.add('open');
+  // Show PIN gate
+  _pinEntry = '';
+  updatePinDots();
+  document.getElementById('pinError').textContent = '';
+  const po = document.getElementById('pinOverlay');
+  po.style.display = 'flex';
+}
+function closePinOverlay(){
+  document.getElementById('pinOverlay').style.display = 'none';
+  _pinEntry = '';
+  updatePinDots();
+}
+function pinKey(d){
+  if(_pinEntry.length >= 4) return;
+  _pinEntry += d;
+  updatePinDots();
+  if(_pinEntry.length === 4) setTimeout(checkPin, 120);
+}
+function pinDel(){
+  _pinEntry = _pinEntry.slice(0,-1);
+  updatePinDots();
+  document.getElementById('pinError').textContent = '';
+}
+function updatePinDots(){
+  document.querySelectorAll('.pdot').forEach((d,i)=>{
+    d.classList.toggle('filled', i < _pinEntry.length);
+  });
+}
+function checkPin(){
+  const stored = appData.settings.pin || '1234';
+  if(_pinEntry === stored){
+    document.getElementById('pinOverlay').style.display = 'none';
+    _pinEntry = '';
+    updatePinDots();
+    updateSettingsTags(); populateOsDropdowns();
+    document.getElementById('settingsOverlay').classList.add('open');
+  } else {
+    document.getElementById('pinError').textContent = 'PIN incorrecto — inténtalo de nuevo';
+    _pinEntry = '';
+    updatePinDots();
+    // Shake animation
+    const dots = document.getElementById('pinDots');
+    dots.style.animation = 'shake .35s ease';
+    setTimeout(()=>dots.style.animation='', 400);
+  }
 }
 function updateSettingsTags(){
   document.getElementById('instrTags').innerHTML=appData.settings.instructors.map((i,idx)=>`<div class="tag">${i}<button class="tx" onclick="rmInstructor(${idx})">×</button></div>`).join('');
@@ -1248,6 +1494,16 @@ function rmOutOfService(tipo,num){
   else{ delete appData.regStatus[key]; }
   updateSettingsTags();
   if(!useFirebase){saveLocal();renderAll();}
+}
+function changePin(){
+  const v = String(document.getElementById('pinNewInput').value).trim();
+  if(v.length !== 4 || !/^\d{4}$/.test(v)){ showToast('El PIN debe tener exactamente 4 dígitos'); return; }
+  if(!appData.settings) appData.settings = {};
+  appData.settings.pin = v;
+  document.getElementById('pinNewInput').value = '';
+  if(useFirebase&&db) db.ref('hispania/settings/pin').set(v);
+  else saveLocal();
+  showToast('🔒 PIN cambiado correctamente');
 }
 function saveSettings(){
   if(useFirebase&&db) db.ref('hispania/settings').set(appData.settings);
@@ -1432,6 +1688,151 @@ function initChatListener(){
     }
   });
 }
+
+
+// ═══ HISTORIAL ═══
+let histTipoSel = '';
+let histUnitSel = null;
+
+function initHistTipo(){
+  if(!appData.settings || !appData.settings.tipos || !appData.settings.tipos.length) return;
+  if(!histTipoSel) histTipoSel = appData.settings.tipos[0].name;
+}
+
+function renderHistTipoRow(){
+  const row = document.getElementById('histTipoRow');
+  if(!row) return;
+  row.innerHTML = '';
+  const tipos = appData.settings && appData.settings.tipos;
+  if(!tipos || !tipos.length) return;
+  tipos.forEach(t=>{
+    const div = document.createElement('div');
+    div.className = 'ttab' + (t.name === histTipoSel ? ' on' : '');
+    div.textContent = t.name;
+    div.onclick = () => { histTipoSel = t.name; renderHistPage(); };
+    row.appendChild(div);
+  });
+  const add = document.createElement('div');
+  add.className = 'ttab add';
+  add.textContent = '+ Tipo';
+  add.onclick = openSettings;
+  row.appendChild(add);
+}
+
+function renderHistGrid(){
+  const grid = document.getElementById('histGrid');
+  if(!grid) return;
+  const tipos = appData.settings && appData.settings.tipos;
+  if(!tipos || !tipos.length){ grid.innerHTML = '<p style="color:var(--mut);font-size:13px">No hay tipos configurados.</p>'; return; }
+  const tipo = tipos.find(t=>t.name===histTipoSel) || tipos[0];
+  histTipoSel = tipo.name;
+  const sub = document.getElementById('histSubtitle');
+  if(sub) sub.textContent = tipo.name + ' — ' + tipo.count + ' unidades · pulsa para ver historial';
+  grid.innerHTML = '';
+  for(let i=1; i<=tipo.count; i++){
+    const safeKey = (histTipoSel+'_unit_'+i).replace(/ /g,'_');
+    const raw = appData.historial && appData.historial[safeKey];
+    let records = [];
+    if(raw){
+      records = Array.isArray(raw) ? raw : Object.values(raw);
+      records = records.filter(r=>r&&r.type);
+    }
+    const lastRec = records.length ? records.sort((a,b)=>(a.ts||0)-(b.ts||0))[records.length-1] : null;
+    const st = getItemState(histTipoSel, i);
+    let cls = 'hreg ';
+    if(st.state === 'ko') cls += 'hreg-ko';
+    else if(!lastRec) cls += 'hreg-new';
+    else if(lastRec.type === 'revision') cls += 'hreg-ok';
+    else if(lastRec.type === 'reparacion' || lastRec.type === 'preventivo') cls += 'hreg-am';
+    else if(lastRec.type === 'averia') cls += 'hreg-ko';
+    else cls += 'hreg-ok';
+    const el = document.createElement('div');
+    el.className = cls;
+    el.innerHTML = '<span class="hreg-n">' + i + '</span>' + (records.length ? '<span class="hreg-dot">●</span>' : '');
+    el.onclick = () => openHistDetail(histTipoSel, i);
+    grid.appendChild(el);
+  }
+}
+
+function renderHistPage(){
+  renderHistTipoRow();
+  renderHistGrid();
+  // Show fixed scroll hint for 2.5 seconds
+  const hint = document.getElementById('scrollHint');
+  if(hint){
+    hint.style.display = 'flex';
+    clearTimeout(window._hintT);
+    window._hintT = setTimeout(()=>{ hint.style.display='none'; }, 2500);
+  }
+}
+
+function openHistDetail(tipo, num){
+  histUnitSel = {tipo, num};
+  document.getElementById('histListView').style.display = 'none';
+  document.getElementById('histDetailView').style.display = 'block';
+  document.getElementById('histDetailTitle').textContent = tipo + ' ' + num;
+  document.getElementById('histRecDate').value = today();
+  renderHistTimeline();
+}
+
+function histBack(){
+  histUnitSel = null;
+  document.getElementById('histDetailView').style.display = 'none';
+  document.getElementById('histListView').style.display = 'block';
+}
+
+function renderHistTimeline(){
+  if(!histUnitSel) return;
+  const safeKey = (histUnitSel.tipo+'_unit_'+histUnitSel.num).replace(/ /g,'_');
+  const raw = appData.historial && appData.historial[safeKey];
+  let records = [];
+  if(raw){ records = Array.isArray(raw) ? raw : Object.values(raw); records = records.filter(r=>r&&r.type); }
+  const countEl = document.getElementById('histDetailCount');
+  if(countEl) countEl.textContent = records.length + ' registro' + (records.length!==1?'s':'');
+  const tl = document.getElementById('histTimeline');
+  if(!tl) return;
+  if(!records.length){
+    tl.innerHTML = '<div style="text-align:center;padding:24px 0;color:var(--mut);font-size:13px">Sin registros aún.<br>Añade el primero arriba.</div>';
+    return;
+  }
+  const typeMap = {
+    revision:  {icon:'✅', label:'Revisión anual',         cls:'ht-ok'},
+    reparacion:{icon:'🔧', label:'Reparación',              cls:'ht-rep'},
+    averia:    {icon:'⚡', label:'Avería',                  cls:'ht-ko'},
+    preventivo:{icon:'🛠️', label:'Mantenimiento preventivo',cls:'ht-prev'},
+    otro:      {icon:'📝', label:'Otro',                    cls:'ht-otro'}
+  };
+  const sorted = [...records].sort((a,b)=>(b.ts||0)-(a.ts||0));
+  tl.innerHTML = sorted.map(r=>{
+    const tm = typeMap[r.type] || {icon:'📝', label:r.type, cls:'ht-otro'};
+    return '<div class="ht-item">'
+      + '<div class="ht-dot '+tm.cls+'"></div>'
+      + '<div class="ht-card">'
+      + '<div class="ht-date">'+fmtDate(r.date)+(r.by?' · '+r.by:'')+'</div>'
+      + '<div class="ht-type">'+tm.icon+' '+tm.label+'</div>'
+      + (r.notes ? '<div class="ht-note">"'+r.notes+'"</div>' : '')
+      + '</div></div>';
+  }).join('');
+}
+
+function saveHistRecord(){
+  if(!histUnitSel) return;
+  const type  = document.getElementById('histRecType').value;
+  const date  = document.getElementById('histRecDate').value || today();
+  const notes = document.getElementById('histRecNotes').value.trim();
+  if(!type){ showToast('Selecciona el tipo de registro'); return; }
+  const safeKey = (histUnitSel.tipo+'_unit_'+histUnitSel.num).replace(/ /g,'_');
+  if(!appData.historial) appData.historial = {};
+  if(!appData.historial[safeKey]) appData.historial[safeKey] = {};
+  const record = {id:uuid(), type, date, notes, by:currentUser, ts:Date.now()};
+  appData.historial[safeKey][record.id] = record;
+  if(useFirebase&&db) db.ref('hispania/historial/'+safeKey+'/'+record.id).set(record);
+  else saveLocal();
+  document.getElementById('histRecNotes').value = '';
+  renderHistTimeline();
+  showToast('✅ Registro guardado');
+}
+
 
 // ── BOOT ──
 loadLocal();
