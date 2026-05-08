@@ -802,7 +802,12 @@ function initFirebase(){
       appData.reservations = data.reservations || {};
       appData.regStatus    = data.regStatus    || {};
       appData.messages     = data.messages     || {};
-      if(data.settings) appData.settings = {...appData.settings, ...data.settings};
+      if(data.settings){
+        const merged = {...appData.settings, ...data.settings};
+        if(!merged.instructors||!merged.instructors.length) merged.instructors = appData.settings.instructors;
+        if(!merged.tipos||!merged.tipos.length) merged.tipos = appData.settings.tipos;
+        appData.settings = merged;
+      }
       if(data.historial) appData.historial = data.historial;
       if(data.loans) appData.loans = Array.isArray(data.loans) ? data.loans : Object.values(data.loans);
       if(data.loanNotifications) appData.loanNotifications = Array.isArray(data.loanNotifications) ? data.loanNotifications : Object.values(data.loanNotifications);
@@ -814,6 +819,7 @@ function initLocal(){
   useFirebase = false;
   document.getElementById('sdot').className = 'sdot off';
   document.getElementById('stext').textContent = 'Solo local (configura Firebase)';
+  populateLoginSelect();
   renderAll();
 }
 function fbSet(path, val){ if(useFirebase&&db) db.ref('hispania/'+path).set(val); saveLocal(); }
@@ -832,7 +838,7 @@ function loadLocal(){
       appData={...appData,...d};
     }
   }catch(e){}
-  if(!appData.settings.instructors.length) appData.settings.instructors=['Carlos García','Laura Martínez','Pedro Sánchez','Ana López','Miguel Torres'];
+  if(!appData.settings.instructors || !appData.settings.instructors.length) appData.settings.instructors=['Carlos García','Laura Martínez','Pedro Sánchez','Ana López','Miguel Torres'];
   if(!appData.settings.managers) appData.settings.managers=['Antonio','Iván'];
   if(!appData.settings.activities.length) appData.settings.activities=['Fun Dive','Refresh','Curso','Bautismo'];
   if(!appData.settings.tipos || !appData.settings.tipos.length) appData.settings.tipos=[{name:'Reguladores',count:50},{name:'Chalecos BCD',count:20}];
@@ -939,6 +945,10 @@ function switchTab(name){
 
 // ── RENDER ALL ──
 function renderAll(){
+  // Refresh login dropdown in case Firebase updated settings
+  if(document.getElementById('loginScreen').style.display !== 'none'){
+    populateLoginSelect();
+  }
   renderGrid();
   renderEstado();
   renderMyReservations();
