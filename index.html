@@ -559,7 +559,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
     <div style="background:var(--rb);border-radius:12px;padding:11px 14px;margin-bottom:14px;font-size:14px;color:var(--rt);font-weight:700">Este equipo no está disponible ahora mismo</div>
     <div id="tRows"></div>
-    <div style="background:var(--ab);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--at);margin-top:12px;font-weight:600">Elige otro elemento disponible (verde) para tu actividad.</div>
+    <button id="tLoanBtn" style="display:none;width:100%;padding:13px;border-radius:13px;border:none;font-size:14px;font-weight:800;color:#fff;cursor:pointer;background:linear-gradient(180deg,#4a9de8,#2473c8);box-shadow:0 4px 0 #1a5ea0;margin-top:12px"></button>
+    <div style="background:var(--ab);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--at);margin-top:10px;font-weight:600">Elige otro elemento disponible (verde) para tu actividad.</div>
   </div>
 </div>
 
@@ -626,6 +627,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="add-row">
         <input id="niInput" placeholder="Nombre del instructor" onkeydown="if(event.key==='Enter')addInstructor()">
         <button onclick="addInstructor()">+</button>
+      </div>
+    </div>
+    <div class="set-sec">
+      <h3>🔧 Encargados de reparación</h3>
+      <div style="font-size:12px;color:var(--mut);margin-bottom:8px">Solo ellos pueden marcar un equipo como reparado</div>
+      <div class="tag-list" id="managerTags"></div>
+      <div class="add-row">
+        <input id="nmInput" placeholder="Nombre del encargado" onkeydown="if(event.key==='Enter')addManager()">
+        <button onclick="addManager()">+</button>
       </div>
     </div>
     <div class="set-sec">
@@ -729,13 +739,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 // ║  FIREBASE CONFIG — pegar aquí tu config   ║
 // ╚════════════════════════════════════════════╝
 const FIREBASE_CONFIG = {
-  apiKey:            "TU_API_KEY",
-  authDomain:        "TU_PROYECTO.firebaseapp.com",
-  databaseURL:       "https://TU_PROYECTO-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:         "TU_PROYECTO",
-  storageBucket:     "TU_PROYECTO.appspot.com",
-  messagingSenderId: "TU_SENDER_ID",
-  appId:             "TU_APP_ID"
+  apiKey:            "AIzaSyAe-tprzn4hwRpHMSfhZGjdyrpGEC6kCAY",
+  authDomain:        "hispania-equipo.firebaseapp.com",
+  databaseURL:       "https://hispania-equipo-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "hispania-equipo",
+  storageBucket:     "hispania-equipo.firebasestorage.app",
+  messagingSenderId: "90000881593",
+  appId:             "1:90000881593:web:841a98b5c30bf187eda868"
 };
 
 // ── STATE ──
@@ -794,6 +804,8 @@ function initFirebase(){
       appData.messages     = data.messages     || {};
       if(data.settings) appData.settings = {...appData.settings, ...data.settings};
       if(data.historial) appData.historial = data.historial;
+      if(data.loans) appData.loans = Array.isArray(data.loans) ? data.loans : Object.values(data.loans);
+      if(data.loanNotifications) appData.loanNotifications = Array.isArray(data.loanNotifications) ? data.loanNotifications : Object.values(data.loanNotifications);
       saveLocal(); renderAll(); updateChatBadge();
     });
   } catch(e){ console.warn(e); initLocal(); }
@@ -821,6 +833,7 @@ function loadLocal(){
     }
   }catch(e){}
   if(!appData.settings.instructors.length) appData.settings.instructors=['Carlos García','Laura Martínez','Pedro Sánchez','Ana López','Miguel Torres'];
+  if(!appData.settings.managers) appData.settings.managers=['Antonio','Iván'];
   if(!appData.settings.activities.length) appData.settings.activities=['Fun Dive','Refresh','Curso','Bautismo'];
   if(!appData.settings.tipos || !appData.settings.tipos.length) appData.settings.tipos=[{name:'Reguladores',count:50},{name:'Chalecos BCD',count:20}];
   if(!appData.settings.outOfService) appData.settings.outOfService=[];
@@ -1038,6 +1051,17 @@ function showTakenPopup(num,info){
   if(info.state==='ko') rows.push(['Estado','<b style="color:#E24B4A">⚡ Avería reportada — pendiente reparación</b>']);
   if(info.desc) rows.push(['Descripción','<i style="color:var(--rt)">'+info.desc+'</i>']);
   document.getElementById('tRows').innerHTML=rows.map(([l,v])=>`<div class="drow"><span class="dlbl">${l}</span><span class="dval">${v}</span></div>`).join('');
+  // Add "Pedir prestado" button if state is taken (not KO, not out) and not own reservation
+  const loanBtn = document.getElementById('tLoanBtn');
+  if(loanBtn){
+    if(info.state==='taken' && info.instructor !== currentUser && info.resId){
+      loanBtn.style.display='block';
+      loanBtn.onclick = ()=>requestLoan(info.resId, selTipo||info.tipo||'', num, info.instructor);
+      loanBtn.textContent = '🤝 Pedir prestado a '+info.instructor;
+    } else {
+      loanBtn.style.display='none';
+    }
+  }
   document.getElementById('takenOverlay').classList.add('open');
 }
 
@@ -1154,170 +1178,252 @@ function renderEstado(){
 
 // ── MIS RESERVAS ──
 function renderMyReservations(){
-  const mine=getMyActive(); const el=document.getElementById('myResList');
-  if(!mine.length){ el.innerHTML='<div class="empty"><div class="empty-ico">👤</div><p>No tienes reservas activas.<br>Ve a Reservar para coger equipos.</p></div>'; return; }
-  el.innerHTML=mine.map(([id,r])=>{
-    const koMap=r.itemKo||{};
-    if(!selForReturn[id]) selForReturn[id]=new Set();
-    const selSet=selForReturn[id];
-    const selCount=selSet.size;
-    const totalItems=(r.items||[]).length;
+  const mine = getMyActive();
+  const el = document.getElementById('myResList');
+  if(!mine.length){
+    el.innerHTML='<div class="empty"><div class="empty-ico">👤</div><p>No tienes reservas activas.<br>Ve a Reservar para coger equipos.</p></div>';
+    return;
+  }
 
-    // Only show non-KO items - KO items disappear completely from Mis Reservas
-    const activeItems = (r.items||[]).filter(num=>!koMap[num]);
-    const koItems = (r.items||[]).filter(num=>!!koMap[num]);
-    const koHtml = '';
+  // ── Group by tipo ──
+  const grouped = {};
+  mine.forEach(([id,r])=>{
+    const t = r.tipo||'Sin tipo';
+    if(!grouped[t]) grouped[t] = {tipo:t, reservations:[], allItems:[], allKo:{}, activities:new Set(), endDates:[], ids:[]};
+    grouped[t].reservations.push([id,r]);
+    grouped[t].ids.push(id);
+    (r.items||[]).forEach(num=>{
+      if(!grouped[t].allItems.includes(num)) grouped[t].allItems.push(num);
+    });
+    if(r.itemKo) Object.assign(grouped[t].allKo, r.itemKo);
+    if(r.activity) grouped[t].activities.add(r.activity);
+    if(r.endDate) grouped[t].endDates.push(r.endDate);
+  });
 
+  // ── Check for loan notifications ──
+  const loanNotifs = (appData.loanNotifications||[]).filter(n=>n.to===currentUser&&!n.read);
+
+  el.innerHTML = '';
+
+  // Loan notifications banner
+  if(loanNotifs.length){
+    loanNotifs.forEach(n=>{
+      const div = document.createElement('div');
+      div.style.cssText = 'background:linear-gradient(135deg,#E6F1FB,#d0e8f7);border-radius:13px;padding:12px 14px;margin-bottom:10px;border:1.5px solid #85B7EB';
+      div.innerHTML = '<div style="font-size:13px;font-weight:800;color:#0C447C;margin-bottom:3px">📬 '+n.message+'</div>'
+        +'<div style="font-size:11px;color:#185FA5">'+formatLoanDate(n.ts)+'</div>';
+      el.appendChild(div);
+    });
+    // Mark as read
+    (appData.loanNotifications||[]).forEach(n=>{ if(n.to===currentUser) n.read=true; });
+    saveLocal();
+  }
+
+  // ── Render one card per tipo ──
+  Object.values(grouped).forEach(group=>{
+    const koMap = group.allKo;
+    const activeItems = group.allItems.filter(num=>!koMap[num]);
+    const t = today();
+    const soonest = group.endDates.sort()[0];
+    const isToday = soonest===t;
+    const daysLeft = Math.max(0,Math.ceil((new Date(soonest+'T23:59:59')-new Date())/86400000));
+
+    // Check for loan items in this group
+    const loanItems = (appData.loans||[]).filter(l=>l.fromUser===currentUser&&l.tipo===group.tipo&&!l.returned);
+    const borrowedItems = (appData.loans||[]).filter(l=>l.toUser===currentUser&&l.tipo===group.tipo&&!l.returned);
+
+    // Items HTML - active only
     const regsHtml = activeItems.map(num=>{
-      const isSel=selSet.has(num);
-      return`<div class="reg-item${isSel?' sel-ret':''}" id="ri_${id}_${num}">
-        <div class="rnum">${num}</div>
-        <span class="rlbl">${r.tipo} ${num}</span>
+      return`<div class="reg-item" id="ri_\${group.tipo}_\${num}">
+        <div class="rnum">\${num}</div>
+        <span class="rlbl">\${group.tipo} \${num}</span>
         <div class="okko">
-          <button class="ok-on" onclick="setItemKo('${id}',${num},false)">OK ✓</button>
-          <button class="ko-off" onclick="openKoModal('${id}',${num},'${r.tipo}','${r.instructor}','${r.activity}')">KO</button>
+          <button class="ok-on" onclick="setItemKoGrouped('\${group.tipo}',\${num},false)">OK ✓</button>
+          <button class="ko-off" onclick="openKoModalGrouped('\${group.tipo}',\${num})">KO</button>
         </div>
-        <div class="ret-chk${isSel?' checked':''}" onclick="toggleReturnSel('${id}',${num})" title="Marcar para devolver">${isSel?'✓':''}</div>
       </div>`;
     }).join('');
 
-    const retActionsHtml = selCount>0
-      ? `<div class="ret-actions">
-          <span class="ret-actions-lbl">✓ ${selCount} de ${totalItems} seleccionados</span>
-          <button class="btn-ret-sel" onclick="returnSelected('${id}')">Devolver ${selCount} equipo${selCount>1?'s':''}</button>
-         </div>`
-      : `<div style="font-size:12px;color:var(--mut);padding:6px 2px;margin-bottom:4px">Toca ✓ en cada equipo para seleccionar los que devuelves</div>`;
+    // Borrowed items HTML (prestados a mí)
+    const borrowedHtml = borrowedItems.map(l=>{
+      return`<div style="background:linear-gradient(135deg,#E6F1FB,#d0e8f7);border-radius:10px;padding:9px 12px;margin-bottom:5px;border:1.5px solid #85B7EB;display:flex;align-items:center;gap:10px">
+        <div class="rnum" style="background:linear-gradient(180deg,#4a9de8,#2473c8);color:#fff;box-shadow:0 2px 0 #1a5ea0">\${l.num}</div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:800;color:#0C447C">Prestado de \${l.fromUser}</div>
+          <div style="font-size:11px;color:#185FA5;margin-top:2px">\${group.tipo} \${l.num}</div>
+        </div>
+        <button onclick="returnLoan('\${l.id}','\${group.tipo}',\${l.num})" style="padding:7px 12px;border-radius:9px;border:none;font-size:11px;font-weight:800;color:#0C447C;background:linear-gradient(180deg,#a8d4f5,#6ab3e8);box-shadow:0 3px 0 #1a5ea0;cursor:pointer;white-space:nowrap">Devolver a \${l.fromUser}</button>
+      </div>`;
+    }).join('');
 
-    const actMini=appData.settings.activities.map(a=>`<div class="act-mini${a===r.activity?' on':''}" onclick="changeActivity('${id}','${a}')">${a}</div>`).join('');
-    const koC=Object.entries(koMap).filter(([k,v])=>v===true&&!k.includes('_desc')).length;
-    const t=today(); const isToday=r.endDate===t;
-    const daysLeft=Math.max(0,Math.ceil((new Date(r.endDate+'T23:59:59')-new Date())/86400000));
-    return`<div class="card" style="border-left:5px solid var(--gb)">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+    // Lent items HTML (prestados por mí)
+    const lentHtml = loanItems.map(l=>{
+      return`<div style="background:linear-gradient(135deg,#FAEEDA,#f5ddb0);border-radius:10px;padding:9px 12px;margin-bottom:5px;border:1.5px solid #f5c460;display:flex;align-items:center;gap:10px">
+        <div class="rnum" style="background:linear-gradient(180deg,#ffe5ab,#f5c460);color:#633806;box-shadow:0 2px 0 #9a6005">\${l.num}</div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:800;color:#633806">Prestado a \${l.toUser}</div>
+          <div style="font-size:11px;color:#854F0B;margin-top:2px">\${group.tipo} \${l.num} · pendiente devolución</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    const actStr = Array.from(group.activities).join(', ');
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.borderLeft = '5px solid var(--gb)';
+
+    // Adjust days stepper uses first reservation id
+    const firstId = group.ids[0];
+    const firstRes = appData.reservations[firstId];
+    const curDias = firstRes ? (firstRes.dias||1) : 1;
+
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
         <div>
-          <div class="card-name">${r.activity} · ${r.tipo}</div>
-          <div class="card-sub">Desde ${fmtDate(r.startDate)} → ${fmtDate(r.endDate)}</div>
+          <div class="card-name">\${group.tipo}</div>
+          <div class="card-sub">\${actStr}</div>
+          <div class="card-sub">Devolver antes del \${fmtDate(soonest)}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">
           <span class="badge b-ok">Activa</span>
-          ${isToday?'<span class="badge b-rd">⏰ Vence hoy</span>':daysLeft>0?`<span class="badge b-gy">${daysLeft}d restante${daysLeft>1?'s':''}</span>`:''}
-          ${koC?`<span class="badge b-ko">⚡ ${koC} KO</span>`:''}
+          \${isToday?'<span class="badge b-rd">⏰ Hoy</span>':daysLeft>0?`<span class="badge b-gy">\${daysLeft}d</span>`:''}
         </div>
       </div>
-      <div class="act-editor">
-        <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--mut)">Cambiar actividad</span>
-        <div class="act-mini-row">${actMini}</div>
-      </div>
       <div class="ajustar-block">
-        <div class="ajustar-lbl">Ajustar duración de la reserva</div>
+        <div class="ajustar-lbl">Ajustar duración</div>
         <div style="display:flex;align-items:center;gap:12px">
           <div class="mini-step">
-            <button class="ms-btn ms-minus" onclick="adjustDays('${id}',-1)">−</button>
-            <div class="ms-val" id="msval_${id}">${r.dias||1}</div>
-            <button class="ms-btn ms-plus" onclick="adjustDays('${id}',1)">+</button>
+            <button class="ms-btn ms-minus" onclick="adjustDaysGrouped('\${group.tipo}',-1)">−</button>
+            <div class="ms-val" id="msval_\${group.tipo}">\${curDias}</div>
+            <button class="ms-btn ms-plus" onclick="adjustDaysGrouped('\${group.tipo}',1)">+</button>
           </div>
           <div>
-            <div style="font-size:14px;font-weight:700;color:var(--txt)">${r.dias||1} día${(r.dias||1)>1?'s':''}</div>
-            <div style="font-size:12px;font-weight:700;color:var(--gb);margin-top:2px" id="adjDate_${id}">Vence el ${fmtDateLong(r.endDate)}</div>
+            <div style="font-size:14px;font-weight:700">\${curDias} día\${curDias>1?'s':''}</div>
+            <div style="font-size:12px;font-weight:700;color:var(--gb)" id="adjDate_\${group.tipo}">Vence el \${fmtDateLong(soonest)}</div>
           </div>
         </div>
         <div class="quick-adj">
-          <div class="qa minus" onclick="adjustDays('${id}',-1)">−1 día</div>
-          <div class="qa plus" onclick="adjustDays('${id}',1)">+1 día</div>
-          <div class="qa plus" onclick="adjustDays('${id}',2)">+2 días</div>
-          <div class="qa plus" onclick="adjustDays('${id}',7)">+7 días</div>
+          <div class="qa minus" onclick="adjustDaysGrouped('\${group.tipo}',-1)">−1 día</div>
+          <div class="qa plus" onclick="adjustDaysGrouped('\${group.tipo}',1)">+1 día</div>
+          <div class="qa plus" onclick="adjustDaysGrouped('\${group.tipo}',2)">+2 días</div>
+          <div class="qa plus" onclick="adjustDaysGrouped('\${group.tipo}',7)">+7 días</div>
         </div>
       </div>
-      <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--mut);margin-bottom:8px">
-        Equipos — toca ✓ para marcar devolución
-      </div>
-      ${retActionsHtml}
-      <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--mut);margin-bottom:6px">Equipos activos</div>
-      ${regsHtml}
-      <button class="btn-ghost" style="margin-top:10px" onclick="returnReservation('${id}')">✓ Devolver TODOS y cerrar reserva</button>
-    </div>`;
-  }).join('');
+      \${activeItems.length>0?'<div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--mut);margin-bottom:8px">Mis equipos ('+activeItems.length+')</div>':''}
+      \${regsHtml}
+      \${borrowedItems.length>0?'<div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#185FA5;margin-bottom:6px;margin-top:8px">📥 Prestados a mí ('+borrowedItems.length+')</div>':''}
+      \${borrowedHtml}
+      \${loanItems.length>0?'<div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#854F0B;margin-bottom:6px;margin-top:8px">📤 Prestados por mí ('+loanItems.length+')</div>':''}
+      \${lentHtml}
+      <button class="btn-ghost" style="margin-top:10px" onclick="returnAllGrouped('\${group.tipo}')">✓ Devolver TODOS y cerrar</button>
+    `;
+    el.appendChild(card);
+  });
 }
 
-// ── TOGGLE RETURN SELECTION ──
-function toggleReturnSel(resId, num){
-  num = Number(num); // ensure always a number, never string
-  if(!selForReturn[resId]) selForReturn[resId]=new Set();
-  const s=selForReturn[resId];
-  if(s.has(num)) s.delete(num); else s.add(num);
-  // Update UI without full re-render for snappy feel
-  const ri=document.getElementById('ri_'+resId+'_'+num);
-  if(ri){
-    ri.classList.toggle('sel-ret',s.has(num));
-    const chk=ri.querySelector('.ret-chk');
-    if(chk){ chk.classList.toggle('checked',s.has(num)); chk.textContent=s.has(num)?'✓':''; }
+function adjustDaysGrouped(tipo, delta){
+  const t = today();
+  Object.entries(appData.reservations).forEach(([id,r])=>{
+    if(r.instructor!==currentUser||r.returned||r.endDate<t||r.tipo!==tipo) return;
+    const newDias = Math.max(1,(r.dias||1)+delta);
+    const newEnd = addDays(r.startDate, newDias-1);
+    if(useFirebase&&db) db.ref('hispania/reservations/'+id).update({dias:newDias,endDate:newEnd});
+    else{ appData.reservations[id].dias=newDias; appData.reservations[id].endDate=newEnd; }
+  });
+  if(!useFirebase){saveLocal();renderAll();}
+  const delta2 = delta>0?'+'+delta:delta;
+  showToast('Duración ajustada '+delta2+' día'+(Math.abs(delta)>1?'s':''));
+}
+
+function openKoModalGrouped(tipo, num){
+  // Find the reservation that has this item
+  const t=today();
+  for(const [id,r] of Object.entries(appData.reservations)){
+    if(r.instructor===currentUser&&!r.returned&&r.endDate>=t&&r.tipo===tipo&&r.items&&r.items.includes(num)){
+      openKoModal(id,num,tipo,currentUser,r.activity||'');
+      return;
+    }
   }
-  // Re-render just the actions bar — find the card and update
-  renderMyReservations();
 }
 
-// ── RETURN SELECTED ──
-function returnSelected(resId){
-  const sel=selForReturn[resId];
-  if(!sel||!sel.size){ showToast('Toca el ✓ de cada equipo para seleccionarlo'); return; }
-  const res=appData.reservations[resId];
-  if(!res) return;
-  const numsToReturn=Array.from(sel);
-  const remaining=(res.items||[]).filter(n=>!sel.has(Number(n)));
-  if(remaining.length===0){
-    // All returned — close the whole reservation
-    returnReservation(resId); return;
+function setItemKoGrouped(tipo, num, ko){
+  const t=today();
+  for(const [id,r] of Object.entries(appData.reservations)){
+    if(r.instructor===currentUser&&!r.returned&&r.endDate>=t&&r.tipo===tipo&&r.items&&r.items.includes(num)){
+      setItemKo(id,num,ko);
+      return;
+    }
   }
-  // Partial return
-  const upd={items: remaining};
-  if(useFirebase&&db) db.ref('hispania/reservations/'+resId).update(upd);
-  else{ appData.reservations[resId]={...res,...upd}; saveLocal(); renderAll(); }
-  selForReturn[resId]=new Set();
-  showToast('✅ '+numsToReturn.length+' equipo'+(numsToReturn.length>1?'s':'')+' devueltos — '+remaining.length+' siguen reservados');
 }
 
-// ── ADJUST DAYS ──
-function adjustDays(resId, delta){
-  const res = appData.reservations[resId];
-  if(!res) return;
-  const newDias = Math.max(1, (res.dias||1)+delta);
-  const newEnd = addDays(res.startDate, newDias-1);
-  const update = {dias: newDias, endDate: newEnd};
-  if(useFirebase&&db) db.ref('hispania/reservations/'+resId).update(update);
-  else{ appData.reservations[resId]={...res,...update}; saveLocal(); renderAll(); }
-  // Update inline UI
-  const v=document.getElementById('msval_'+resId); if(v) v.textContent=newDias;
-  const d=document.getElementById('adjDate_'+resId); if(d) d.textContent='Vence el '+fmtDateLong(newEnd);
-  showToast(delta>0?`⏳ Ampliado hasta el ${fmtDate(newEnd)}`:`Reducido hasta el ${fmtDate(newEnd)}`);
+function returnAllGrouped(tipo){
+  if(!confirm('¿Devolver todos los '+tipo+' y cerrar reservas?')) return;
+  const t=today();
+  Object.entries(appData.reservations).forEach(([id,r])=>{
+    if(r.instructor===currentUser&&!r.returned&&r.endDate>=t&&r.tipo===tipo){
+      const upd={returned:true,returnedAt:Date.now()};
+      if(useFirebase&&db) db.ref('hispania/reservations/'+id).update(upd);
+      else appData.reservations[id]={...appData.reservations[id],...upd};
+    }
+  });
+  if(!useFirebase){saveLocal();renderAll();}
+  showToast('✅ '+tipo+' devueltos');
 }
 
-// ── KO MODAL ──
-function openKoModal(resId, num, tipo, instructor, activity){
-  pendingKo = {resId, num, tipo, instructor, activity};
-  document.getElementById('koTitle').textContent = 'Reportar avería · '+tipo+' '+num;
-  document.getElementById('koNumDisp').textContent = num;
-  document.getElementById('koSubtitle').textContent = tipo+' '+num+' · '+instructor+' · '+activity;
-  document.getElementById('koDesc').value = '';
-  document.getElementById('koOverlay').classList.add('open');
-}
-function confirmKo(){
-  if(!pendingKo) return;
-  const desc = document.getElementById('koDesc').value.trim();
-  if(!desc){ showToast('Describe la avería antes de confirmar'); document.getElementById('koDesc').focus(); return; }
-  const {resId, num} = pendingKo;
-  if(useFirebase&&db){
-    db.ref(`hispania/reservations/${resId}/itemKo/${num}`).set(true);
-    db.ref(`hispania/reservations/${resId}/itemKo/${num}_desc`).set(desc);
-  } else {
-    if(!appData.reservations[resId].itemKo) appData.reservations[resId].itemKo={};
-    appData.reservations[resId].itemKo[num]=true;
-    appData.reservations[resId].itemKo[num+'_desc']=desc;
-    saveLocal(); renderAll();
+function formatLoanDate(ts){ return ts ? new Date(ts).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})+' · '+new Date(ts).toLocaleDateString('es-ES',{day:'numeric',month:'short'}) : ''; }
+
+// ── LOAN SYSTEM (pedir prestado) ──
+function requestLoan(fromResId, tipo, num, fromUser){
+  if(!appData.loans) appData.loans=[];
+  const loan = {id:uuid(), tipo, num, fromUser, toUser:currentUser, fromResId, returned:false, ts:Date.now()};
+  appData.loans.push(loan);
+  // Remove from original reservation
+  const res = appData.reservations[fromResId];
+  if(res){
+    const newItems = (res.items||[]).filter(i=>i!==num);
+    if(useFirebase&&db){
+      db.ref('hispania/reservations/'+fromResId+'/items').set(newItems);
+      db.ref('hispania/loans/'+loan.id).set(loan);
+    } else {
+      appData.reservations[fromResId].items=newItems;
+    }
   }
-  closeOverlay('koOverlay');
-  showToast('⚡ Avería reportada — Reg. '+num+' notificado al encargado');
-  pendingKo=null;
+  // Add notification to original owner
+  if(!appData.loanNotifications) appData.loanNotifications=[];
+  const notif = {id:uuid(), to:fromUser, from:currentUser, message:currentUser+' te ha pedido prestado el '+tipo+' '+num, ts:Date.now(), read:false};
+  appData.loanNotifications.push(notif);
+  if(useFirebase&&db) db.ref('hispania/loanNotifications/'+notif.id).set(notif);
+  if(!useFirebase){saveLocal();renderAll();}
+  closeOverlay('takenOverlay');
+  showToast('📬 Solicitud enviada — '+tipo+' '+num+' ahora es tuyo');
+  switchTab('misreservas');
 }
+
+function returnLoan(loanId, tipo, num){
+  const loan = (appData.loans||[]).find(l=>l.id===loanId);
+  if(!loan) return;
+  loan.returned=true;
+  // Return item to original reservation
+  const res = appData.reservations[loan.fromResId];
+  if(res&&!res.returned){
+    const newItems = [...(res.items||[]), num];
+    if(useFirebase&&db){
+      db.ref('hispania/reservations/'+loan.fromResId+'/items').set(newItems);
+      db.ref('hispania/loans/'+loanId+'/returned').set(true);
+    } else {
+      appData.reservations[loan.fromResId].items=newItems;
+    }
+  }
+  // Notify original owner
+  if(!appData.loanNotifications) appData.loanNotifications=[];
+  const notif={id:uuid(),to:loan.fromUser,from:currentUser,message:currentUser+' te ha devuelto el '+tipo+' '+num,ts:Date.now(),read:false};
+  appData.loanNotifications.push(notif);
+  if(useFirebase&&db) db.ref('hispania/loanNotifications/'+notif.id).set(notif);
+  if(!useFirebase){saveLocal();renderAll();}
+  showToast('✅ '+tipo+' '+num+' devuelto a '+loan.fromUser);
+}
+
+
 function setItemKo(resId, num, ko){
   if(useFirebase&&db){
     db.ref(`hispania/reservations/${resId}/itemKo/${num}`).set(false);
@@ -1380,18 +1486,34 @@ function renderAverias(){
     }).join('');
 }
 function markRepaired(key, resId, num){
+  // Only managers can repair
+  const managers = (appData.settings && appData.settings.managers) || ['Antonio','Iván'];
+  const isManager = managers.some(m => m.toLowerCase() === (currentUser||'').toLowerCase());
+  if(!isManager){
+    showToast('🚫 No tienes permisos para esta función');
+    return;
+  }
+  // Remove item from ALL reservations (it becomes free for anyone)
   for(const [id,res] of Object.entries(appData.reservations)){
-    if(res.itemKo&&res.itemKo[num]===true){
-      if(useFirebase&&db) db.ref(`hispania/reservations/${id}/itemKo/${num}`).set(false);
-      else appData.reservations[id].itemKo[num]=false;
+    if(!res.items || !res.items.includes(num)) continue;
+    if(res.tipo !== (key.includes('_unit_') ? key.split('_unit_')[0].replace(/_/g,' ') : '')) continue;
+    // Remove from items array
+    const newItems = res.items.filter(i=>i!==num);
+    if(useFirebase&&db){
+      db.ref(`hispania/reservations/${id}/items`).set(newItems);
+      db.ref(`hispania/reservations/${id}/itemKo/${num}`).remove();
+    } else {
+      appData.reservations[id].items = newItems;
+      if(appData.reservations[id].itemKo) delete appData.reservations[id].itemKo[num];
     }
   }
+  // Also clear from regStatus
   if(appData.regStatus[key]?.status==='ko'){
-    if(useFirebase&&db) db.ref('hispania/regStatus/'+key.replace(/\./g,'_')).remove();
+    if(useFirebase&&db) db.ref('hispania/regStatus/'+key).remove();
     else delete appData.regStatus[key];
   }
   if(!useFirebase){saveLocal();renderAll();}
-  showToast('🔧 Reparado — vuelve al servicio');
+  showToast('🔧 Reparado — regulador libre para reservar');
 }
 function updateNotifBadge(){
   const k=getKoList(); const b=document.getElementById('nBadge');
@@ -1448,11 +1570,24 @@ function checkPin(){
   }
 }
 function updateSettingsTags(){
+  if(appData.settings.managers){
+    document.getElementById('managerTags').innerHTML=appData.settings.managers.map((m,idx)=>`<div class="tag" style="background:var(--bl);color:var(--bt);box-shadow:0 2px 0 #85B7EB">${m}<button class="tx" style="color:var(--bt)" onclick="rmManager(${idx})">×</button></div>`).join('');
+  }
   document.getElementById('instrTags').innerHTML=appData.settings.instructors.map((i,idx)=>`<div class="tag">${i}<button class="tx" onclick="rmInstructor(${idx})">×</button></div>`).join('');
   document.getElementById('actTags').innerHTML=appData.settings.activities.map((a,idx)=>`<div class="tag">${a}<button class="tx" onclick="rmActivity(${idx})">×</button></div>`).join('');
   document.getElementById('tipoTags').innerHTML=appData.settings.tipos.map((t,idx)=>`<div class="tag">${t.name} (${t.count})<button class="tx" onclick="rmTipo(${idx})">×</button></div>`).join('');
   document.getElementById('osTags').innerHTML=(appData.settings.outOfService||[]).map(o=>`<div class="tag" style="background:var(--rb);color:var(--rt);box-shadow:0 2px 0 #c45050">${o.tipo} ${o.num}<button class="tx" style="color:var(--rt)" onclick="rmOutOfService('${o.tipo}',${o.num})">×</button></div>`).join('');
 }
+function addManager(){
+  const v=document.getElementById('nmInput').value.trim();
+  if(!v) return;
+  if(!appData.settings.managers) appData.settings.managers=[];
+  if(appData.settings.managers.includes(v)){ showToast('Ya existe'); return; }
+  appData.settings.managers.push(v);
+  document.getElementById('nmInput').value='';
+  updateSettingsTags();
+}
+function rmManager(i){ appData.settings.managers.splice(i,1); updateSettingsTags(); }
 function addInstructor(){ const v=document.getElementById('niInput').value.trim(); if(!v||appData.settings.instructors.includes(v))return; appData.settings.instructors.push(v); document.getElementById('niInput').value=''; updateSettingsTags(); populateFormSelects(); populateLoginSelect(); }
 function rmInstructor(i){ appData.settings.instructors.splice(i,1); updateSettingsTags(); populateFormSelects(); populateLoginSelect(); }
 function addActivity(){ const v=document.getElementById('naInput').value.trim(); if(!v||appData.settings.activities.includes(v))return; appData.settings.activities.push(v); document.getElementById('naInput').value=''; updateSettingsTags(); populateFormSelects(); }
@@ -1512,6 +1647,8 @@ function changePin(){
 }
 function saveSettings(){
   if(useFirebase&&db) db.ref('hispania/settings').set(appData.settings);
+  // Deep merge managers default
+  if(!appData.settings.managers||!appData.settings.managers.length) appData.settings.managers=['Antonio','Iván'];
   else{ saveLocal(); renderAll(); }
   populateFormSelects(); populateLoginSelect();
   showToast('✅ Configuración guardada');
