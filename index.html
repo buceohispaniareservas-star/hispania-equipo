@@ -382,6 +382,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <button class="lbtn" onclick="doLogin()">Entrar →</button>
   </div>
   <p class="lnote">Configura FIREBASE_CONFIG en el código para activar la sincronización en tiempo real entre dispositivos.</p>
+<button onclick="clearAndReload()" style="margin-top:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);border-radius:10px;padding:7px 16px;font-size:11px;cursor:pointer">Restablecer datos locales</button>
 </div>
 
 <!-- ══════ MAIN APP ══════ -->
@@ -804,9 +805,14 @@ function initFirebase(){
       appData.messages     = data.messages     || {};
       if(data.settings){
         const merged = {...appData.settings, ...data.settings};
-        if(!merged.instructors||!merged.instructors.length) merged.instructors = appData.settings.instructors;
-        if(!merged.tipos||!merged.tipos.length) merged.tipos = appData.settings.tipos;
+        if(!merged.instructors||!merged.instructors.length) merged.instructors = ['Valentín'];
+        if(!merged.tipos||!merged.tipos.length) merged.tipos = [{name:'Reguladores',count:50},{name:'Chalecos BCD',count:20}];
+        if(!merged.managers||!merged.managers.length) merged.managers = ['Valentín'];
         appData.settings = merged;
+      } else {
+        // No settings in Firebase yet — ensure defaults
+        if(!appData.settings.instructors||!appData.settings.instructors.length) appData.settings.instructors=['Valentín'];
+        if(!appData.settings.managers||!appData.settings.managers.length) appData.settings.managers=['Valentín'];
       }
       if(data.historial) appData.historial = data.historial;
       if(data.loans) appData.loans = Array.isArray(data.loans) ? data.loans : Object.values(data.loans);
@@ -838,8 +844,8 @@ function loadLocal(){
       appData={...appData,...d};
     }
   }catch(e){}
-  if(!appData.settings.instructors || !appData.settings.instructors.length) appData.settings.instructors=['Carlos García','Laura Martínez','Pedro Sánchez','Ana López','Miguel Torres'];
-  if(!appData.settings.managers) appData.settings.managers=['Antonio','Iván'];
+  if(!appData.settings.instructors || !appData.settings.instructors.length) appData.settings.instructors=['Valentín'];
+  if(!appData.settings.managers || !appData.settings.managers.length) appData.settings.managers=['Valentín'];
   if(!appData.settings.activities.length) appData.settings.activities=['Fun Dive','Refresh','Curso','Bautismo'];
   if(!appData.settings.tipos || !appData.settings.tipos.length) appData.settings.tipos=[{name:'Reguladores',count:50},{name:'Chalecos BCD',count:20}];
   if(!appData.settings.outOfService) appData.settings.outOfService=[];
@@ -1658,7 +1664,7 @@ function changePin(){
 function saveSettings(){
   if(useFirebase&&db) db.ref('hispania/settings').set(appData.settings);
   // Deep merge managers default
-  if(!appData.settings.managers||!appData.settings.managers.length) appData.settings.managers=['Antonio','Iván'];
+  if(!appData.settings.managers||!appData.settings.managers.length) appData.settings.managers=['Valentín'];
   else{ saveLocal(); renderAll(); }
   populateFormSelects(); populateLoginSelect();
   showToast('✅ Configuración guardada');
@@ -1986,6 +1992,12 @@ function saveHistRecord(){
 }
 
 
+function clearAndReload(){
+  if(confirm('¿Borrar datos locales y reiniciar? Los datos de Firebase se mantendrán.')){
+    localStorage.removeItem('hispania_equipo');
+    location.reload();
+  }
+}
 // ── BOOT ──
 loadLocal();
 populateLoginSelect();
