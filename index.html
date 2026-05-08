@@ -544,6 +544,18 @@ textarea.fsel{resize:none;line-height:1.5}
         <button onclick="changePin()" style="background:linear-gradient(180deg,#22b584,#13865B);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 3px 0 #0a5c3f;white-space:nowrap">Cambiar</button>
       </div>
     </div>
+    <div class="set-sec">
+      <h3>📤 Exportar Historial</h3>
+      <div style="font-size:12px;color:var(--mut);margin-bottom:10px">Descarga el historial completo de mantenimiento</div>
+      <span class="lbl">Filtrar por tipo</span>
+      <select class="fsel" id="exportTipoSel" style="margin-bottom:10px">
+        <option value="todos">Todos los tipos</option>
+      </select>
+      <div style="display:flex;gap:8px">
+        <button onclick="exportExcel()" style="flex:1;padding:11px;border-radius:11px;border:none;font-size:13px;font-weight:700;color:#fff;cursor:pointer;background:linear-gradient(180deg,#22b584,#13865B);box-shadow:0 3px 0 #0a5c3f">📊 Excel</button>
+        <button onclick="exportPDF()" style="flex:1;padding:11px;border-radius:11px;border:none;font-size:13px;font-weight:700;color:#fff;cursor:pointer;background:linear-gradient(180deg,#f05555,#c93232);box-shadow:0 3px 0 #8f1f1f">📄 PDF</button>
+      </div>
+    </div>
     <button onclick="closeOverlay('settingsOverlay');saveSettings()" style="width:100%;background:linear-gradient(180deg,#22b584,#13865B);color:#fff;border:none;border-radius:13px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #0a5c3f;margin-top:6px">Guardar y cerrar</button>
   </div>
 </div>
@@ -551,6 +563,9 @@ textarea.fsel{resize:none;line-height:1.5}
 <div id="scrollHint"><div class="sh-arr">↑</div><div class="sh-txt">Desliza</div></div>
 <div id="toast"></div>
 
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
 <script>
@@ -663,6 +678,7 @@ function initFirebase(){
       if(data.regStatus)    DB.regStatus    = data.regStatus;
       if(data.historial)    DB.historial    = data.historial;
       if(data.loans)        DB.loans        = Array.isArray(data.loans)?data.loans:Object.values(data.loans);
+      if(data.messages)     DB.messages     = Array.isArray(data.messages)?data.messages:Object.values(data.messages);
       if(data.loanNotifs)   DB.loanNotifs   = Array.isArray(data.loanNotifs)?data.loanNotifs:Object.values(data.loanNotifs);
       if(data.settings){
         const s = data.settings;
@@ -747,6 +763,7 @@ function renderAll(){
   renderAvisoVence();
   const hp=S('page-historial');
   if(hp&&hp.classList.contains('on')) renderHistPage();
+  updateChatBadge();
 }
 
 // ════════════════════════════════════
@@ -1007,9 +1024,12 @@ function renderMyReservations(){
     const lent=loans.filter(l=>l.fromUser===currentUser&&l.tipo===g.tipo);
     const card=document.createElement('div');
     card.className='card'; card.style.borderLeft='5px solid var(--gb)';
+    // Check if any reservation in this group is a loan
+    const loanRes = g.ids.map(id=>DB.reservations[id]).find(r=>r&&r.isLoan);
+    const loanBadge = loanRes ? '<span class="badge" style="background:linear-gradient(180deg,#4a9de8,#2473c8);color:#fff;box-shadow:0 2px 0 #1a5ea0">📥 Prestado de '+loanRes.loanFrom+'</span>' : '<span class="badge b-ok">Activa</span>';
     let html='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
       +'<div><div class="card-name">'+g.tipo+'</div><div class="card-sub">'+actStr+'</div><div class="card-sub">Devolver antes del '+fmtDate(soonest)+'</div></div>'
-      +'<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end"><span class="badge b-ok">Activa</span>'
+      +'<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">'+loanBadge
       +(isToday?'<span class="badge b-rd">⏰ Hoy</span>':daysLeft>0?'<span class="badge b-gy">'+daysLeft+'d</span>':'')+'</div></div>';
     // Actividad editor
     html+='<div class="act-editor"><span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--mut)">Cambiar actividad</span><div class="act-mini-row">'
@@ -1188,40 +1208,238 @@ function updateNotifBadge(){
 // ════════════════════════════════════
 function requestLoan(fromResId,tipo,num,fromUser){
   if(!DB.loans) DB.loans=[];
-  const loan={id:uuid(),tipo,num,fromUser,toUser:currentUser,fromResId,returned:false,ts:Date.now()};
+  const loanId = uuid();
+  const loan={id:loanId,tipo,num,fromUser,toUser:currentUser,fromResId,returned:false,ts:Date.now()};
   DB.loans.push(loan);
+
+  // Remove item from original owner's reservation
   const res=DB.reservations[fromResId];
   if(res){
     const newItems=(res.items||[]).filter(i=>i!==num);
-    if(useFirebase&&db){db.ref('hispania/reservations/'+fromResId+'/items').set(newItems);db.ref('hispania/loans/'+loan.id).set(loan);}
-    else{DB.reservations[fromResId].items=newItems;}
+    if(useFirebase&&db){
+      db.ref('hispania/reservations/'+fromResId+'/items').set(newItems);
+      db.ref('hispania/loans/'+loanId).set(loan);
+    } else {
+      DB.reservations[fromResId].items=newItems;
+    }
   }
+
+  // Create a virtual reservation for the borrower so it shows in their Mis Reservas
+  const virtId = 'loan_'+loanId;
+  const virtRes = {
+    id: virtId,
+    instructor: currentUser,
+    activity: res ? res.activity : 'Prestado',
+    tipo: tipo,
+    items: [num],
+    startDate: today(),
+    endDate: res ? res.endDate : addDays(today(), 3),
+    dias: 1,
+    returned: false,
+    returnedAt: null,
+    itemKo: {},
+    createdAt: Date.now(),
+    isLoan: true,
+    loanId: loanId,
+    loanFrom: fromUser
+  };
+  DB.reservations[virtId] = virtRes;
+  if(useFirebase&&db) db.ref('hispania/reservations/'+virtId).set(virtRes);
+
+  // Notify original owner
   if(!DB.loanNotifs) DB.loanNotifs=[];
-  const notif={id:uuid(),to:fromUser,from:currentUser,message:currentUser+' te ha pedido prestado el '+tipo+' '+num,ts:Date.now(),read:false};
+  const notif={id:uuid(),to:fromUser,from:currentUser,type:'loan_request',message:currentUser+' te ha pedido prestado el '+tipo+' '+num,tipo,num,ts:Date.now(),read:false};
   DB.loanNotifs.push(notif);
   if(useFirebase&&db) db.ref('hispania/loanNotifs/'+notif.id).set(notif);
   if(!useFirebase){saveLocal();renderAll();}
   closeOverlay('takenOverlay');
-  showToast('📬 Enviado · '+tipo+' '+num+' ahora es tuyo');
+  showToast('📬 Enviado · '+tipo+' '+num+' ahora aparece en tus reservas');
   switchTab('misreservas');
 }
 function returnLoan(loanId,tipo,num){
   const loan=(DB.loans||[]).find(l=>l.id===loanId); if(!loan)return;
   loan.returned=true;
+
+  // Return item to original owner's reservation
   const res=DB.reservations[loan.fromResId];
   if(res&&!res.returned){
     const newItems=[...(res.items||[]),num];
-    if(useFirebase&&db){db.ref('hispania/reservations/'+loan.fromResId+'/items').set(newItems);db.ref('hispania/loans/'+loanId+'/returned').set(true);}
-    else{DB.reservations[loan.fromResId].items=newItems;}
+    if(useFirebase&&db){
+      db.ref('hispania/reservations/'+loan.fromResId+'/items').set(newItems);
+      db.ref('hispania/loans/'+loanId+'/returned').set(true);
+    } else {
+      DB.reservations[loan.fromResId].items=newItems;
+    }
   }
+
+  // Mark virtual reservation as returned
+  const virtId='loan_'+loanId;
+  if(DB.reservations[virtId]){
+    if(useFirebase&&db) db.ref('hispania/reservations/'+virtId).update({returned:true,returnedAt:Date.now()});
+    else{DB.reservations[virtId].returned=true;DB.reservations[virtId].returnedAt=Date.now();}
+  }
+
+  // Notify original owner
   if(!DB.loanNotifs) DB.loanNotifs=[];
-  const notif={id:uuid(),to:loan.fromUser,from:currentUser,message:currentUser+' te ha devuelto el '+tipo+' '+num,ts:Date.now(),read:false};
+  const notif={id:uuid(),to:loan.fromUser,from:currentUser,type:'loan_return',message:currentUser+' te ha devuelto el '+tipo+' '+num,tipo,num,ts:Date.now(),read:false};
   DB.loanNotifs.push(notif);
   if(useFirebase&&db) db.ref('hispania/loanNotifs/'+notif.id).set(notif);
   if(!useFirebase){saveLocal();renderAll();}
   showToast('✅ '+tipo+' '+num+' devuelto a '+loan.fromUser);
 }
-function openChat(){ switchTab('misreservas'); }
+function openChat(){
+  const existing=document.getElementById('chatOverlay');
+  if(existing) existing.remove();
+
+  const notifs=(DB.loanNotifs||[]).filter(n=>n.to===currentUser);
+  const msgs=(DB.messages||[]);
+  const unreadN=notifs.filter(n=>!n.read).length;
+
+  const overlay=document.createElement('div');
+  overlay.id='chatOverlay';
+  overlay.className='overlay open';
+  overlay.onclick=(e)=>{if(e.target===overlay)overlay.remove();};
+
+  const typeIcon={loan_request:'🤝',loan_return:'✅',averia:'⚡'};
+
+  const notifsHtml=!notifs.length
+    ?'<div style="text-align:center;padding:20px;color:var(--mut);font-size:13px">Sin notificaciones aún</div>'
+    :[...notifs].reverse().map(n=>`
+      <div style="background:${n.read?'var(--gy)':'var(--bl)'};border-radius:11px;padding:11px 13px;margin-bottom:7px;border:1.5px solid ${n.read?'var(--brd)':'#85B7EB'}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px">
+          <div style="font-size:13px;font-weight:800;color:${n.read?'var(--txt)':'var(--bt)'}">${typeIcon[n.type]||'📬'} ${n.from}</div>
+          <div style="font-size:10px;color:var(--mut)">${new Date(n.ts).toLocaleDateString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+        </div>
+        <div style="font-size:12px;color:var(--mut)">${n.message}</div>
+      </div>`).join('');
+
+  // Messages between instructors
+  const myMsgs=msgs.filter(m=>m.to===currentUser||m.from===currentUser);
+  const msgsHtml=!myMsgs.length
+    ?'<div style="text-align:center;padding:20px;color:var(--mut);font-size:13px">Sin mensajes aún</div>'
+    :[...myMsgs].sort((a,b)=>a.ts-b.ts).map(m=>{
+      const isMe=m.from===currentUser;
+      return `<div style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:8px">
+        <div style="max-width:75%;background:${isMe?'linear-gradient(180deg,#22b584,#13865B)':'var(--card)'};color:${isMe?'#fff':'var(--txt)'};border-radius:${isMe?'14px 14px 3px 14px':'14px 14px 14px 3px'};padding:9px 13px;box-shadow:0 2px 4px rgba(0,0,0,.08)">
+          ${!isMe?'<div style="font-size:10px;font-weight:800;color:var(--gb);margin-bottom:3px">'+m.from+'</div>':''}
+          <div style="font-size:13px;line-height:1.4">${m.text}</div>
+          <div style="font-size:10px;opacity:.65;margin-top:4px;text-align:right">${new Date(m.ts).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+  // Instructor list for "To" selector
+  const instrOpts=DB.settings.instructors.filter(i=>i!==currentUser).map(i=>`<option value="${i}">${i}</option>`).join('');
+
+  overlay.innerHTML=`<div class="sheet" style="max-height:92vh">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">
+      <span>✉️ Mensajes${unreadN?' ('+unreadN+' nuevos)':''}</span>
+      <button class="close-btn" onclick="document.getElementById('chatOverlay').remove()">✕</button>
+    </div>
+
+    <!-- TABS DENTRO DEL CHAT -->
+    <div style="display:flex;gap:6px;margin-bottom:14px">
+      <button id="chatTabMsg" onclick="showChatTab('msg')" style="flex:1;padding:9px;border-radius:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;background:linear-gradient(180deg,#22b584,#13865B);color:#fff;box-shadow:0 3px 0 #0a5c3f">💬 Mensajes</button>
+      <button id="chatTabNotif" onclick="showChatTab('notif')" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--brd);font-size:13px;font-weight:700;cursor:pointer;background:var(--gy);color:var(--mut)">🔔 Avisos${unreadN?' ('+unreadN+')':''}</button>
+    </div>
+
+    <!-- MENSAJES -->
+    <div id="chatPanelMsg">
+      <!-- Nuevo mensaje -->
+      <div style="background:var(--gy);border-radius:12px;padding:11px;margin-bottom:12px;border:1.5px solid var(--brd)">
+        <span class="lbl" style="margin-bottom:6px">Nuevo mensaje</span>
+        <select id="chatTo" class="fsel" style="margin-bottom:8px"><option value="">— Para quién —</option>${instrOpts}</select>
+        <div style="display:flex;gap:8px">
+          <input id="chatText" type="text" placeholder="Escribe tu mensaje..." style="flex:1;background:var(--card);border:1.5px solid var(--brd);border-radius:10px;padding:10px 12px;font-size:13px;font-family:inherit" onkeydown="if(event.key==='Enter')sendMsg()">
+          <button onclick="sendMsg()" style="background:linear-gradient(180deg,#22b584,#13865B);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:16px;cursor:pointer;box-shadow:0 3px 0 #0a5c3f">➤</button>
+        </div>
+      </div>
+      <!-- Historial mensajes -->
+      <div id="chatMsgList" style="max-height:300px;overflow-y:auto;padding-right:4px">${msgsHtml}</div>
+    </div>
+
+    <!-- AVISOS -->
+    <div id="chatPanelNotif" style="display:none">
+      ${notifsHtml}
+      ${notifs.length?'<button onclick="clearChatNotifs()" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--brd);background:var(--gy);font-size:13px;color:var(--mut);cursor:pointer;margin-top:4px">Borrar avisos</button>':''}
+    </div>
+  </div>`;
+
+  document.body.appendChild(overlay);
+
+  // Mark notifs as read
+  (DB.loanNotifs||[]).forEach(n=>{if(n.to===currentUser)n.read=true;});
+  saveLocal(); updateChatBadge();
+
+  // Scroll messages to bottom
+  setTimeout(()=>{const ml=document.getElementById('chatMsgList');if(ml)ml.scrollTop=ml.scrollHeight;},100);
+}
+
+function showChatTab(tab){
+  const msg=document.getElementById('chatPanelMsg');
+  const notif=document.getElementById('chatPanelNotif');
+  const btnMsg=document.getElementById('chatTabMsg');
+  const btnNotif=document.getElementById('chatTabNotif');
+  if(tab==='msg'){
+    msg.style.display='block'; notif.style.display='none';
+    btnMsg.style.cssText='flex:1;padding:9px;border-radius:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;background:linear-gradient(180deg,#22b584,#13865B);color:#fff;box-shadow:0 3px 0 #0a5c3f';
+    btnNotif.style.cssText='flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--brd);font-size:13px;font-weight:700;cursor:pointer;background:var(--gy);color:var(--mut)';
+  } else {
+    msg.style.display='none'; notif.style.display='block';
+    btnNotif.style.cssText='flex:1;padding:9px;border-radius:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;background:linear-gradient(180deg,#22b584,#13865B);color:#fff;box-shadow:0 3px 0 #0a5c3f';
+    btnMsg.style.cssText='flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--brd);font-size:13px;font-weight:700;cursor:pointer;background:var(--gy);color:var(--mut)';
+  }
+}
+
+function sendMsg(){
+  const to=document.getElementById('chatTo');
+  const txt=document.getElementById('chatText');
+  if(!to||!txt) return;
+  if(!to.value){showToast('Selecciona el destinatario');return;}
+  if(!txt.value.trim()){showToast('Escribe un mensaje');return;}
+  const msg={id:uuid(),from:currentUser,to:to.value,text:txt.value.trim(),ts:Date.now(),read:false};
+  if(!DB.messages) DB.messages=[];
+  DB.messages.push(msg);
+  if(useFirebase&&db) db.ref('hispania/messages/'+msg.id).set(msg);
+  else saveLocal();
+  // Notify recipient
+  if(!DB.loanNotifs) DB.loanNotifs=[];
+  const notif={id:uuid(),to:to.value,from:currentUser,type:'message',message:'Mensaje de '+currentUser+': "'+msg.text+'"',ts:Date.now(),read:false};
+  DB.loanNotifs.push(notif);
+  if(useFirebase&&db) db.ref('hispania/loanNotifs/'+notif.id).set(notif);
+  txt.value='';
+  showToast('✉️ Mensaje enviado a '+to.value);
+  // Refresh chat
+  const co=document.getElementById('chatOverlay');
+  if(co) co.remove();
+  setTimeout(openChat,100);
+}
+
+
+function clearChatNotifs(){
+  DB.loanNotifs=(DB.loanNotifs||[]).filter(n=>n.to!==currentUser);
+  if(useFirebase&&db){
+    // Remove from Firebase
+    db.ref('hispania/loanNotifs').once('value',snap=>{
+      const data=snap.val()||{};
+      Object.entries(data).forEach(([k,v])=>{ if(v.to===currentUser) db.ref('hispania/loanNotifs/'+k).remove(); });
+    });
+  }
+  saveLocal();
+  const co=document.getElementById('chatOverlay');
+  if(co) co.remove();
+  updateChatBadge();
+  showToast('Mensajes borrados');
+}
+
+function updateChatBadge(){
+  const unreadN=(DB.loanNotifs||[]).filter(n=>n.to===currentUser&&!n.read).length;
+  const unreadM=(DB.messages||[]).filter(m=>m.to===currentUser&&!m.read).length;
+  const total=unreadN+unreadM;
+  const b=S('chatBadge');
+  if(b){ b.style.display=total?'flex':'none'; b.textContent=total>9?'9+':total; }
+}
 
 // ════════════════════════════════════
 //  HISTORIAL
@@ -1344,6 +1562,12 @@ function updateSettingsTags(){
   S('actTags').innerHTML=DB.settings.activities.map((a,i)=>'<div class="tag">'+a+'<button class="tx" onclick="rmActivity('+i+')">×</button></div>').join('');
   S('tipoTags').innerHTML=DB.settings.tipos.map((t,i)=>'<div class="tag">'+t.name+' ('+t.count+')<button class="tx" onclick="rmTipo('+i+')">×</button></div>').join('');
   S('osTags').innerHTML=(DB.settings.outOfService||[]).map(o=>'<div class="tag" style="background:var(--rb);color:var(--rt);box-shadow:0 2px 0 #c45050">'+o.tipo+' '+o.num+'<button class="tx" style="color:var(--rt)" onclick="rmOutOfService(\''+o.tipo+'\','+o.num+')">×</button></div>').join('');
+  // Populate export filter
+  const exSel=S('exportTipoSel');
+  if(exSel){
+    exSel.innerHTML='<option value="todos">Todos los tipos</option>';
+    DB.settings.tipos.forEach(t=>{const o=document.createElement('option');o.value=o.textContent=t.name;exSel.appendChild(o);});
+  }
 }
 function addManager(){const v=S('nmInput').value.trim();if(!v||DB.settings.managers.includes(v))return;DB.settings.managers.push(v);S('nmInput').value='';updateSettingsTags();}
 function rmManager(i){DB.settings.managers.splice(i,1);updateSettingsTags();}
@@ -1358,6 +1582,97 @@ function populateOsNums(){const tipo=S('osType').value;const t=DB.settings.tipos
 function addOutOfService(){const tipo=S('osType').value;const num=parseInt(S('osNum').value);if(!tipo||!num)return;if(!DB.settings.outOfService)DB.settings.outOfService=[];if(DB.settings.outOfService.find(o=>o.tipo===tipo&&o.num===num))return;DB.settings.outOfService.push({tipo,num});const key=tipo+'_'+num;if(useFirebase&&db)db.ref('hispania/regStatus/'+key).set({status:'out_of_service',setAt:Date.now()});else{DB.regStatus[key]={status:'out_of_service'};}updateSettingsTags();populateOsDropdowns();}
 function rmOutOfService(tipo,num){if(!DB.settings.outOfService)return;DB.settings.outOfService=DB.settings.outOfService.filter(o=>!(o.tipo===tipo&&o.num===num));const key=tipo+'_'+num;fbRemove('regStatus/'+key);if(!useFirebase)delete DB.regStatus[key];updateSettingsTags();}
 function saveSettings(){if(useFirebase&&db)db.ref('hispania/settings').set(DB.settings);else saveLocal();populateFormSelects();populateLoginSelect();showToast('✅ Ajustes guardados');}
+
+// ════════════════════════════════════
+//  EXPORT HISTORIAL
+// ════════════════════════════════════
+function getExportData(tipoFilter){
+  const rows=[];
+  const tipos = tipoFilter==='todos' ? DB.settings.tipos.map(t=>t.name) : [tipoFilter];
+  tipos.forEach(tipo=>{
+    const tipoObj=DB.settings.tipos.find(t=>t.name===tipo);
+    if(!tipoObj) return;
+    for(let i=1;i<=tipoObj.count;i++){
+      const safeKey=(tipo+'_unit_'+i).replace(/ /g,'_');
+      const raw=DB.historial&&DB.historial[safeKey];
+      let records=[];
+      if(raw){records=Array.isArray(raw)?raw:Object.values(raw);records=records.filter(r=>r&&r.type);}
+      if(!records.length){
+        rows.push({Tipo:tipo,Unidad:tipo+' '+i,Fecha:'—',TipoRegistro:'Sin registros',Observaciones:'',Responsable:''});
+      } else {
+        records.sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(r=>{
+          const typeLabel={revision:'Revisión anual',reparacion:'Reparación',averia:'Avería',preventivo:'Mantenimiento preventivo',otro:'Otro'}[r.type]||r.type;
+          rows.push({Tipo:tipo,Unidad:tipo+' '+i,Fecha:r.date||'—',TipoRegistro:typeLabel,Observaciones:r.notes||'',Responsable:r.by||''});
+        });
+      }
+    }
+  });
+  return rows;
+}
+
+function exportExcel(){
+  const tipoFilter=S('exportTipoSel')?S('exportTipoSel').value:'todos';
+  const rows=getExportData(tipoFilter);
+  if(!rows.length){showToast('Sin datos para exportar');return;}
+  try{
+    const wb=XLSX.utils.book_new();
+    // Group by tipo
+    const tipos=tipoFilter==='todos'?DB.settings.tipos.map(t=>t.name):[tipoFilter];
+    tipos.forEach(tipo=>{
+      const tipoRows=rows.filter(r=>r.Tipo===tipo);
+      if(!tipoRows.length) return;
+      const ws=XLSX.utils.json_to_sheet(tipoRows.map(r=>({
+        'Unidad':r.Unidad,'Fecha':r.Fecha,'Tipo de Registro':r.TipoRegistro,
+        'Observaciones':r.Observaciones,'Responsable':r.Responsable
+      })));
+      ws['!cols']=[{wch:20},{wch:12},{wch:22},{wch:40},{wch:16}];
+      XLSX.utils.book_append_sheet(wb,ws,tipo.substr(0,31));
+    });
+    const fname='Historial_Hispania_'+today()+'.xlsx';
+    XLSX.writeFile(wb,fname);
+    showToast('📊 Excel descargado');
+  }catch(e){console.error(e);showToast('Error al generar Excel: '+e.message);}
+}
+
+function exportPDF(){
+  const tipoFilter=S('exportTipoSel')?S('exportTipoSel').value:'todos';
+  const rows=getExportData(tipoFilter);
+  if(!rows.length){showToast('Sin datos para exportar');return;}
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    const tipos=tipoFilter==='todos'?DB.settings.tipos.map(t=>t.name):[tipoFilter];
+    let isFirst=true;
+    tipos.forEach(tipo=>{
+      const tipoRows=rows.filter(r=>r.Tipo===tipo);
+      if(!tipoRows.length) return;
+      if(!isFirst) doc.addPage();
+      isFirst=false;
+      // Header
+      doc.setFillColor(15,110,86);
+      doc.rect(0,0,297,20,'F');
+      doc.setTextColor(255,255,255);
+      doc.setFontSize(14);doc.setFont('helvetica','bold');
+      doc.text('🤿 Mantenimiento de Equipo Hispania',10,9);
+      doc.setFontSize(10);doc.setFont('helvetica','normal');
+      doc.text(tipo+' — Historial de mantenimiento',10,16);
+      doc.text('Fecha: '+new Date().toLocaleDateString('es-ES'),240,16);
+      // Table
+      doc.autoTable({
+        startY:24,
+        head:[['Unidad','Fecha','Tipo de Registro','Observaciones','Responsable']],
+        body:tipoRows.map(r=>[r.Unidad,r.Fecha,r.TipoRegistro,r.Observaciones,r.Responsable]),
+        styles:{fontSize:8,cellPadding:2},
+        headStyles:{fillColor:[15,110,86],textColor:[255,255,255],fontStyle:'bold'},
+        alternateRowStyles:{fillColor:[225,245,238]},
+        columnStyles:{0:{cellWidth:28},1:{cellWidth:20},2:{cellWidth:30},3:{cellWidth:120},4:{cellWidth:24}},
+        margin:{top:24,left:5,right:5}
+      });
+    });
+    doc.save('Historial_Hispania_'+today()+'.pdf');
+    showToast('📄 PDF descargado');
+  }catch(e){console.error(e);showToast('Error al generar PDF: '+e.message);}
+}
 
 // ════════════════════════════════════
 //  PWA
