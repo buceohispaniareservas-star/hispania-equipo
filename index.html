@@ -1,0 +1,2103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+
+<!-- ═══ PWA — iPhone & Android ═══ -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hispania">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0F6E56">
+<meta name="description" content="Control de equipo de buceo en tiempo real — Buceo Hispania">
+
+<!-- Icono para iPhone (pantalla de inicio) -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230F6E56'/><text y='.9em' font-size='72' x='50%' text-anchor='middle'>🤿</text></svg>">
+
+<!-- Web App Manifest (Android Chrome "Añadir a pantalla de inicio") -->
+<link rel="manifest" id="pwaManifest">
+
+<title>Mantenimiento de Equipo Hispania</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --gd:#085041;--gm:#0F6E56;--gb:#1D9E75;--gl:#5DCAA5;--gp:#E1F5EE;
+  --am:#EF9F27;--ab:#FAEEDA;--at:#633806;
+  --rd:#E24B4A;--rb:#FCEBEB;--rt:#791F1F;
+  --bl:#E6F1FB;--bt:#0C447C;
+  --gy:#f0f4f3;--card:#ffffff;--txt:#1a1a1a;--mut:#6b7280;--brd:rgba(0,0,0,0.10);
+}
+html,body{height:100%;overflow-x:hidden;overscroll-behavior-y:contain}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--gy);color:var(--txt);max-width:480px;margin:0 auto;min-height:100vh}
+
+/* ═══ LOGIN ═══ */
+#loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px 24px;background:linear-gradient(160deg,#14856A 0%,#085041 55%,#04342C 100%)}
+.logo{font-size:60px;margin-bottom:14px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.3))}
+.ltitle{font-size:24px;font-weight:800;color:#fff;text-align:center;margin-bottom:5px;line-height:1.2}
+.lsub{font-size:13px;color:#9FE1CB;text-align:center;margin-bottom:40px;line-height:1.5}
+.lcard{background:rgba(255,255,255,.12);border-radius:20px;padding:24px;width:100%;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.15)}
+.lcard label{display:block;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#9FE1CB;margin-bottom:8px}
+.lcard select{width:100%;background:#fff;border:none;border-radius:13px;padding:13px 16px;font-size:16px;color:var(--txt);margin-bottom:16px;-webkit-appearance:none;font-family:inherit}
+.lbtn{width:100%;background:linear-gradient(180deg,#22b584,#13865B);color:#fff;border:none;border-radius:13px;padding:15px;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 5px 0 #0a5c3f,0 8px 16px rgba(13,104,69,.35);text-shadow:0 1px 2px rgba(0,0,0,.2)}
+.lnote{font-size:10px;color:rgba(255,255,255,.35);text-align:center;margin-top:18px;line-height:1.5;padding:0 12px}
+
+/* ═══ MAIN APP ═══ */
+#mainApp{display:none;flex-direction:column;min-height:100vh}
+#offlineBanner{display:none;background:var(--ab);color:var(--at);text-align:center;padding:7px;font-size:12px;font-weight:700}
+
+/* ═══ HEADER ═══ */
+.hdr{background:linear-gradient(180deg,#14856A,#0F6E56);position:sticky;top:0;z-index:100;padding:12px 16px 0;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.hrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.htitle{color:#fff;font-size:16px;font-weight:800;letter-spacing:.2px}
+.hdate{color:#9FE1CB;font-size:11px;margin-top:2px}
+.hright{display:flex;align-items:center;gap:8px}
+.hbtn{background:rgba(255,255,255,.15);border:none;border-radius:50%;width:36px;height:36px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;position:relative;box-shadow:0 2px 0 rgba(0,0,0,.15)}
+.hbtn:active{background:rgba(255,255,255,.28);transform:scale(.93)}
+.nbadge{position:absolute;top:-3px;right:-3px;background:#E24B4A;color:#fff;border-radius:50%;width:16px;height:16px;font-size:8px;font-weight:800;display:none;align-items:center;justify-content:center;border:2px solid #0F6E56}
+.sync-row{display:flex;align-items:center;gap:6px;margin-bottom:9px}
+.sdot{width:8px;height:8px;border-radius:50%;background:#5DCAA5;flex-shrink:0;transition:background .3s}
+.sdot.off{background:#9ca3af}.sdot.syn{background:var(--am);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.stext{font-size:11px;color:#9FE1CB;font-weight:600}
+.uchip{background:rgba(255,255,255,.15);border-radius:20px;padding:3px 11px;font-size:11px;color:rgba(255,255,255,.85);font-weight:600}
+
+/* ═══ TABS ═══ */
+.tabs{display:flex;background:var(--gd)}
+.tab{flex:1;text-align:center;padding:10px 2px 9px;border-bottom:3px solid transparent;cursor:pointer;user-select:none;transition:border-color .2s}
+.tab.on{border-bottom-color:#5DCAA5}
+.tab-icon{font-size:18px;display:block;margin-bottom:3px}
+.tab-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#9FE1CB}
+.tab.on .tab-lbl{color:#fff}
+
+/* ═══ PAGES ═══ */
+.page{display:none;padding:14px 14px 96px;animation:fadeIn .18s ease}
+.page.on{display:block}
+@keyframes fadeIn{from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══ FORM ELEMENTS ═══ */
+.lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);margin-bottom:7px;display:block}
+.fsel{width:100%;background:var(--card);border:1.5px solid var(--brd);border-radius:12px;padding:12px 14px;font-size:15px;color:var(--txt);-webkit-appearance:none;margin-bottom:14px;font-family:inherit;box-shadow:0 2px 4px rgba(0,0,0,.05)}
+.fsel:focus{outline:none;border-color:var(--gb)}
+
+/* ═══ ACTIVIDADES ═══ */
+.act-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.apill{padding:9px 15px;border-radius:24px;font-size:13px;font-weight:700;cursor:pointer;background:var(--card);color:var(--mut);border:1.5px solid var(--brd);box-shadow:0 3px 0 rgba(0,0,0,.1);user-select:none;transition:all .15s}
+.apill.on{background:linear-gradient(180deg,#4a9de8,#2473c8);color:#fff;border-color:#1a5ea0;box-shadow:0 4px 0 #1a5ea0,0 6px 10px rgba(36,115,200,.25)}
+.apill:active{transform:translateY(2px)}
+
+/* ═══ TIPO BLOQUE ═══ */
+.tipo-block{background:var(--card);border-radius:14px;padding:13px 14px;margin-bottom:14px;border:1.5px solid var(--brd);box-shadow:0 2px 6px rgba(0,0,0,.05)}
+.tipo-row{display:flex;gap:7px;flex-wrap:wrap}
+.ttab{flex-shrink:0;padding:8px 15px;border-radius:22px;font-size:13px;font-weight:700;cursor:pointer;background:var(--gy);color:var(--mut);border:1.5px solid var(--brd);box-shadow:0 3px 0 rgba(0,0,0,.08);user-select:none;transition:all .15s}
+.ttab.on{background:linear-gradient(180deg,#22b584,#13865B);color:#fff;border-color:#0d6645;box-shadow:0 4px 0 #0d6645,0 6px 10px rgba(19,134,91,.25)}
+.ttab.add{border-style:dashed;font-size:12px;color:var(--mut);background:var(--card)}
+
+/* ═══ DÍAS STEPPER ═══ */
+.dias-block{background:var(--card);border-radius:14px;padding:14px;margin-bottom:14px;border:1.5px solid var(--brd);box-shadow:0 2px 6px rgba(0,0,0,.05)}
+.dias-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.dias-until{font-size:12px;font-weight:700;color:var(--gb);background:var(--gp);padding:4px 11px;border-radius:10px;border:1px solid var(--gl)}
+.dias-until.late{color:var(--rt);background:var(--rb);border-color:#f5a5a5}
+.stepper{display:flex;align-items:stretch;border-radius:14px;overflow:hidden;box-shadow:0 4px 0 rgba(0,0,0,.12),0 6px 14px rgba(0,0,0,.08);margin-bottom:12px}
+.sp-btn{width:58px;border:none;font-size:26px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;transition:filter .1s}
+.sp-btn:active{filter:brightness(.88)}
+.sp-minus{background:linear-gradient(180deg,#f07070,#c93232);color:#fff}
+.sp-plus{background:linear-gradient(180deg,#22b584,#13865B);color:#fff}
+.sp-val{flex:1;text-align:center;background:var(--card);border-top:1.5px solid var(--brd);border-bottom:1.5px solid var(--brd);padding:10px 0;user-select:none}
+.sp-num{font-size:30px;font-weight:800;color:var(--txt);line-height:1}
+.sp-sub{font-size:11px;font-weight:600;color:var(--mut);margin-top:3px}
+.quick-days{display:flex;gap:6px;flex-wrap:wrap}
+.qd{padding:8px 14px;border-radius:10px;font-size:13px;font-weight:700;background:var(--gy);color:var(--mut);border:1.5px solid var(--brd);box-shadow:0 3px 0 rgba(0,0,0,.08);cursor:pointer;user-select:none;transition:all .15s}
+.qd.on{background:linear-gradient(180deg,#3ec998,#1a9068);color:#fff;border-color:#136b4d;box-shadow:0 3px 0 #136b4d}
+.qd:active{transform:translateY(2px)}
+
+/* ═══ CONTADOR ═══ */
+.ctr-bar{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:12px;padding:10px 14px;margin-bottom:12px;border:1.5px solid var(--brd);box-shadow:0 2px 4px rgba(0,0,0,.05)}
+.ctr-bar span{font-size:13px;color:var(--mut);font-weight:600}
+.ctr-bar b{font-size:16px;font-weight:800}
+.cpill{font-size:12px;font-weight:700;padding:5px 12px;border-radius:12px}
+.cpill.ok{background:linear-gradient(180deg,#c8f0d4,#8ed5a0);color:#1a5c2a;box-shadow:0 2px 0 #4a9460}
+.cpill.warn{background:linear-gradient(180deg,#ffd5d5,#f5a5a5);color:#791F1F;box-shadow:0 2px 0 #c45050}
+
+/* ═══ LEGEND ═══ */
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.li{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--mut);font-weight:600}
+.ld{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+
+/* ═══ REGULATOR GRID ═══ */
+.rgrid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-bottom:14px}
+.reg{width:100%;aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;cursor:pointer;user-select:none;position:relative;transition:transform .1s}
+.reg:active{transform:scale(.84)}
+.reg.free{background:linear-gradient(180deg,#c8f0d4,#7ec893);color:#1a5c2a;border:1px solid #6ab87c;box-shadow:0 3px 0 #3d8c4d}
+.reg.mine{background:linear-gradient(180deg,#2ed499,#13865B);color:#fff;border:1px solid #0d6645;box-shadow:0 3px 0 #0a4d32}
+.reg.taken{background:linear-gradient(180deg,#ffd5d5,#f5a5a5);color:#791F1F;border:1px solid #e88080;box-shadow:0 3px 0 #c45050}
+.reg.ko{background:linear-gradient(180deg,#f07070,#c93232);color:#fff;border:1px solid #a02525;box-shadow:0 3px 0 #7a1515}
+.reg.out{background:#e5e7eb;color:#9ca3af;border:1px solid #d1d5db;box-shadow:0 2px 0 #b0b4bb;cursor:default}
+.reg .ko-dot{position:absolute;top:1px;right:1px;font-size:6px;line-height:1}
+
+/* ═══ MAIN BUTTONS ═══ */
+.btn-green{width:100%;padding:15px;border-radius:14px;border:none;font-size:15px;font-weight:800;color:#fff;cursor:pointer;background:linear-gradient(180deg,#22b584,#13865B);box-shadow:0 5px 0 #0a5c3f,0 8px 16px rgba(13,104,69,.3);text-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .1s,box-shadow .1s;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-green:active{transform:translateY(4px);box-shadow:0 1px 0 #0a5c3f}
+.btn-green:disabled{background:#9ca3af;box-shadow:0 4px 0 #6b7280;cursor:not-allowed}
+.btn-red{width:100%;padding:14px;border-radius:14px;border:none;font-size:15px;font-weight:800;color:#fff;cursor:pointer;background:linear-gradient(180deg,#f05555,#c93232);box-shadow:0 5px 0 #8f1f1f,0 8px 16px rgba(180,40,40,.3);text-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .1s;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-red:active{transform:translateY(4px);box-shadow:0 1px 0 #8f1f1f}
+.btn-amber{width:100%;padding:14px;border-radius:14px;border:none;font-size:15px;font-weight:800;color:#fff;cursor:pointer;background:linear-gradient(180deg,#f5b942,#d48a10);box-shadow:0 5px 0 #9a6005,0 8px 16px rgba(200,130,20,.3);transition:transform .1s;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-amber:active{transform:translateY(4px)}
+.btn-ghost{width:100%;padding:13px;border-radius:14px;font-size:14px;font-weight:700;color:var(--mut);cursor:pointer;background:var(--card);border:1.5px solid var(--brd);box-shadow:0 4px 0 rgba(0,0,0,.08);transition:transform .1s;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-ghost:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.08)}
+
+/* ═══ OK/KO BUTTONS ═══ */
+.okko{display:flex;gap:6px}
+.ok-on{padding:8px 14px;border-radius:10px;border:none;font-size:12px;font-weight:800;color:#1a5c2a;cursor:pointer;background:linear-gradient(180deg,#a8e06a,#7bc23e);box-shadow:0 3px 0 #4f8020}
+.ok-off{padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;color:var(--mut);cursor:pointer;background:var(--card);border:1.5px solid var(--brd);box-shadow:0 2px 0 rgba(0,0,0,.08)}
+.ko-on{padding:8px 14px;border-radius:10px;border:none;font-size:12px;font-weight:800;color:#fff;cursor:pointer;background:linear-gradient(180deg,#f05555,#c93232);box-shadow:0 3px 0 #8f1f1f}
+.ko-off{padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;color:var(--mut);cursor:pointer;background:var(--card);border:1.5px solid var(--brd);box-shadow:0 2px 0 rgba(0,0,0,.08)}
+.ok-on:active,.ok-off:active,.ko-on:active,.ko-off:active{transform:translateY(2px)}
+
+/* ═══ STAT ROW ═══ */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.stat{background:var(--card);border-radius:12px;padding:12px 6px;text-align:center;border:1.5px solid var(--brd);box-shadow:0 2px 6px rgba(0,0,0,.05)}
+.stat-n{font-size:26px;font-weight:800;line-height:1}
+.stat-l{font-size:9px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+
+/* ═══ CARDS ═══ */
+.card{background:var(--card);border-radius:14px;padding:14px 16px;margin-bottom:10px;border:1.5px solid var(--brd);box-shadow:0 2px 6px rgba(0,0,0,.05)}
+.card-name{font-size:16px;font-weight:800;margin-bottom:2px}
+.card-sub{font-size:12px;color:var(--mut);margin-top:2px;line-height:1.4}
+.badge{font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;white-space:nowrap}
+.b-ok{background:linear-gradient(180deg,#c8f0d4,#8ed5a0);color:#1a5c2a;box-shadow:0 2px 0 #4a9460}
+.b-am{background:linear-gradient(180deg,#ffe5ab,#f5c460);color:#633806;box-shadow:0 2px 0 #9a6005}
+.b-rd{background:linear-gradient(180deg,#ffd5d5,#f5a5a5);color:#791F1F;box-shadow:0 2px 0 #c45050}
+.b-ko{background:linear-gradient(180deg,#f07070,#c93232);color:#fff;box-shadow:0 2px 0 #8f1f1f}
+.b-gy{background:#f3f4f6;color:var(--mut);border:1.5px solid var(--brd)}
+
+/* ═══ REG ITEM ═══ */
+.reg-item{display:flex;align-items:center;background:var(--gy);border-radius:11px;padding:10px 12px;margin-bottom:6px;transition:background .15s,border .15s;border:2px solid transparent}
+.reg-item.sel-ret{background:#e8f8f0;border-color:#5DCAA5}
+.rnum{border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;margin-right:10px;background:linear-gradient(180deg,#c8f0d4,#8ed5a0);color:#1a5c2a;box-shadow:0 3px 0 #4a9460}
+.rnum.ko{background:linear-gradient(180deg,#ffd5d5,#f5a5a5);color:#791F1F;box-shadow:0 3px 0 #c45050}
+.rlbl{font-size:14px;font-weight:600;flex:1;color:var(--txt)}
+/* checkbox devolver */
+.ret-chk{width:26px;height:26px;border-radius:7px;border:2px solid var(--brd);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-left:8px;cursor:pointer;transition:all .15s;box-shadow:0 2px 0 rgba(0,0,0,.08)}
+.ret-chk.checked{background:linear-gradient(180deg,#22b584,#13865B);border-color:#0d6645;box-shadow:0 3px 0 #0a5c3f;color:#fff}
+/* return actions bar */
+.ret-actions{background:linear-gradient(180deg,#e8f8f0,#d0f0e0);border-radius:12px;padding:11px 13px;margin-bottom:8px;border:1.5px solid #5DCAA5;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ret-actions-lbl{font-size:13px;font-weight:700;color:var(--gd)}
+.btn-ret-sel{background:linear-gradient(180deg,#22b584,#13865B);color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #0a5c3f;white-space:nowrap}
+.btn-ret-sel:active{transform:translateY(3px);box-shadow:0 1px 0 #0a5c3f}
+
+/* ═══ AJUSTAR DÍAS ═══ */
+.ajustar-block{background:var(--gy);border-radius:12px;padding:12px 13px;margin:10px 0}
+.ajustar-lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--mut);margin-bottom:10px}
+.mini-step{display:flex;align-items:stretch;border-radius:12px;overflow:hidden;box-shadow:0 3px 0 rgba(0,0,0,.1);max-width:200px}
+.ms-btn{width:44px;border:none;font-size:22px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none}
+.ms-minus{background:linear-gradient(180deg,#f07070,#c93232);color:#fff}
+.ms-plus{background:linear-gradient(180deg,#22b584,#13865B);color:#fff}
+.ms-val{flex:1;text-align:center;background:var(--card);border-top:1.5px solid var(--brd);border-bottom:1.5px solid var(--brd);padding:9px 0;font-size:18px;font-weight:800;color:var(--txt);user-select:none}
+.quick-adj{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
+.qa{padding:7px 12px;border-radius:9px;font-size:12px;font-weight:700;background:var(--card);color:var(--mut);border:1.5px solid var(--brd);box-shadow:0 2px 0 rgba(0,0,0,.08);cursor:pointer;user-select:none}
+.qa:active{transform:translateY(2px)}
+.qa.plus{background:linear-gradient(180deg,#e8f8f0,#c8f0d4);color:#1a5c2a;border-color:#7ec893;box-shadow:0 2px 0 #4a9460}
+.qa.minus{background:linear-gradient(180deg,#fff0f0,#ffd5d5);color:#791F1F;border-color:#f5a5a5;box-shadow:0 2px 0 #c45050}
+
+/* ═══ AVISO VENCE ═══ */
+.aviso-card{background:linear-gradient(135deg,#FFFBF0,#FFF5DC);border:2px solid var(--am);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 4px 12px rgba(239,159,39,.2)}
+.aviso-regs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 8px}
+.av-reg{background:linear-gradient(180deg,#22b584,#13865B);color:#fff;border-radius:9px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;box-shadow:0 3px 0 #0a5c3f}
+
+/* ═══ AVERÍAS ═══ */
+.averia-card{background:var(--card);border-radius:14px;padding:14px 16px;margin-bottom:10px;border-left:5px solid var(--rd);border-top:1.5px solid var(--brd);border-right:1.5px solid var(--brd);border-bottom:1.5px solid var(--brd);box-shadow:0 3px 8px rgba(0,0,0,.06)}
+.averia-card.fixed{border-left-color:#7bc23e;opacity:.65}
+.rep-btn{padding:8px 14px;border-radius:10px;border:none;font-size:12px;font-weight:800;color:#1a5c2a;cursor:pointer;background:linear-gradient(180deg,#a8e06a,#7bc23e);box-shadow:0 3px 0 #4f8020;white-space:nowrap;flex-shrink:0}
+.rep-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #4f8020}
+.desc-box{background:#FFF5F5;border-radius:10px;padding:10px 12px;border:1.5px solid #f5a5a5;margin-top:8px}
+.desc-label{font-size:10px;font-weight:800;color:#A32D2D;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.desc-text{font-size:13px;color:var(--txt);line-height:1.5;font-style:italic}
+
+/* ═══ ACTIVITY EDITOR ═══ */
+.act-editor{background:var(--gy);border-radius:10px;padding:10px;margin:10px 0}
+.act-mini-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.act-mini{padding:7px 12px;border-radius:18px;font-size:12px;font-weight:700;border:1.5px solid var(--brd);color:var(--mut);background:var(--card);cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,.08)}
+.act-mini.on{background:linear-gradient(180deg,#4a9de8,#2473c8);color:#fff;border-color:#1a5ea0;box-shadow:0 3px 0 #1a5ea0}
+
+/* ═══ SEC TITLE ═══ */
+.sec-t{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);margin:16px 0 10px;display:flex;align-items:center;gap:6px}
+.sec-t::after{content:'';flex:1;height:1px;background:var(--brd)}
+
+/* ═══ EMPTY ═══ */
+.empty{text-align:center;padding:40px 20px;color:var(--mut)}
+.empty-ico{font-size:48px;margin-bottom:12px}
+.empty p{font-size:14px;line-height:1.6}
+
+/* ═══ OVERLAY / BOTTOM SHEET ═══ */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+.sheet{background:var(--card);border-radius:24px 24px 0 0;padding:18px 18px 36px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;animation:slideUp .22s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-handle{width:40px;height:4px;background:#d1d5db;border-radius:2px;margin:0 auto 16px}
+.sheet-title{font-size:18px;font-weight:800;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.close-btn{background:none;border:none;font-size:24px;color:var(--mut);cursor:pointer;line-height:1;padding:0}
+.drow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--brd);font-size:14px}
+.drow:last-of-type{border:none}
+.dlbl{color:var(--mut);font-weight:600}
+.dval{font-weight:700;text-align:right;max-width:60%}
+
+/* ═══ KO MODAL TEXTAREA ═══ */
+.ko-textarea{width:100%;background:var(--gy);border:2px solid var(--rd);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--txt);font-family:inherit;resize:none;line-height:1.5;min-height:90px;margin-bottom:14px}
+.ko-textarea:focus{outline:none;border-color:#c93232;background:var(--card)}
+
+/* ═══ SETTINGS ═══ */
+#settingsOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;padding:40px 14px 14px;flex-direction:column}
+#settingsOverlay.open{display:flex}
+.set-inner{background:var(--card);border-radius:22px;padding:20px;overflow-y:auto;flex:1}
+.set-sec{margin-bottom:22px}
+.set-sec h3{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);margin-bottom:10px;padding-bottom:8px;border-bottom:1.5px solid var(--brd)}
+.tag-list{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px}
+.tag{background:var(--gp);color:var(--gd);padding:6px 12px;border-radius:20px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;box-shadow:0 2px 0 var(--gl)}
+.tx{cursor:pointer;background:none;border:none;font-size:14px;color:var(--gd);line-height:1;padding:0}
+.add-row{display:flex;gap:8px}
+.add-row input{flex:1;background:var(--gy);border:1.5px solid var(--brd);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--txt);font-family:inherit}
+.add-row input:focus{outline:none;border-color:var(--gb);background:var(--card)}
+.add-row button{background:linear-gradient(180deg,#22b584,#13865B);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 3px 0 #0a5c3f}
+
+/* ═══ TOAST ═══ */
+#toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(10px);background:#1a1a1a;color:#fff;padding:10px 22px;border-radius:24px;font-size:13px;z-index:500;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;max-width:92vw;text-align:center;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ═══ REG CHIPS ═══ */
+.reg-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.rc{background:linear-gradient(180deg,#c8f0d4,#8ed5a0);color:#1a5c2a;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:800;box-shadow:0 2px 0 #4a9460}
+/* ═══ CHAT ═══ */
+#chatOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;flex-direction:column;padding:0}
+#chatOverlay.open{display:flex}
+.chat-panel{display:flex;flex-direction:column;background:var(--gy);width:100%;max-width:480px;margin:0 auto;height:100%;max-height:100vh}
+.chat-header{background:linear-gradient(180deg,#14856A,#0F6E56);padding:14px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.chat-title{color:#fff;font-size:16px;font-weight:800;flex:1}
+.chat-close{background:rgba(255,255,255,.15);border:none;border-radius:50%;width:36px;height:36px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+/* tabs inbox/compose */
+.chat-tabs{display:flex;background:var(--gd);flex-shrink:0}
+.chat-tab{flex:1;padding:11px;text-align:center;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#9FE1CB;border-bottom:3px solid transparent;cursor:pointer}
+.chat-tab.on{color:#fff;border-bottom-color:#5DCAA5}
+/* compose */
+.chat-compose{padding:14px;flex-shrink:0;background:var(--card);border-bottom:1.5px solid var(--brd)}
+.chat-to-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.chat-to-lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--mut);white-space:nowrap}
+.chat-to-sel{flex:1;background:var(--gy);border:1.5px solid var(--brd);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--txt);-webkit-appearance:none;font-family:inherit}
+.chat-to-sel:focus{outline:none;border-color:var(--gb)}
+.chat-textarea{width:100%;background:var(--gy);border:1.5px solid var(--brd);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--txt);font-family:inherit;resize:none;line-height:1.5;min-height:80px;margin-bottom:10px}
+.chat-textarea:focus{outline:none;border-color:var(--gb);background:var(--card)}
+.chat-send-btn{width:100%;padding:13px;border-radius:13px;border:none;font-size:15px;font-weight:800;color:#fff;cursor:pointer;background:linear-gradient(180deg,#4a9de8,#2473c8);box-shadow:0 4px 0 #1a5ea0,0 6px 12px rgba(36,115,200,.25);display:flex;align-items:center;justify-content:center;gap:8px}
+.chat-send-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #1a5ea0}
+.chat-send-btn:disabled{background:#9ca3af;box-shadow:0 3px 0 #6b7280;cursor:not-allowed}
+/* messages list */
+.chat-list{flex:1;overflow-y:auto;padding:12px 14px 20px}
+.msg-card{border-radius:14px;padding:13px 15px;margin-bottom:10px;position:relative}
+.msg-card.received{background:var(--card);border:1.5px solid var(--brd);border-left:4px solid #4a9de8;box-shadow:0 2px 6px rgba(0,0,0,.05)}
+.msg-card.received.unread{background:linear-gradient(135deg,#f0f7ff,#e6f1fb);border-left-color:#2473c8}
+.msg-card.sent{background:linear-gradient(135deg,#f0faf6,#e1f5ee);border:1.5px solid var(--gl);border-right:4px solid var(--gb)}
+.msg-from{font-size:13px;font-weight:800;color:var(--txt);margin-bottom:2px}
+.msg-to{font-size:11px;color:var(--mut);margin-bottom:6px}
+.msg-text{font-size:14px;color:var(--txt);line-height:1.5;margin-bottom:8px}
+.msg-time{font-size:10px;color:var(--mut);font-weight:600}
+.msg-unread-dot{position:absolute;top:13px;right:13px;width:10px;height:10px;border-radius:50%;background:#2473c8;box-shadow:0 0 0 3px rgba(36,115,200,.2)}
+.msg-delete{position:absolute;bottom:10px;right:12px;background:none;border:none;font-size:16px;color:var(--mut);cursor:pointer;opacity:.5;padding:2px 5px}
+.msg-delete:active{opacity:1}
+.unread-badge-pill{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(180deg,#4a9de8,#2473c8);color:#fff;border-radius:10px;padding:3px 10px;font-size:11px;font-weight:800;box-shadow:0 2px 0 #1a5ea0}
+
+/* ═══ PIN ═══ */
+.pdot{width:16px;height:16px;border-radius:50%;border:2.5px solid #5DCAA5;background:transparent;transition:background .15s}
+.pdot.filled{background:#5DCAA5}
+.pin-key{padding:16px;border-radius:14px;border:none;font-size:20px;font-weight:800;cursor:pointer;background:rgba(255,255,255,.12);color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.25);transition:transform .1s,box-shadow .1s;-webkit-tap-highlight-color:transparent}
+.pin-key:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.2)}
+.pin-del{background:rgba(239,159,39,.3);color:#EF9F27}
+.pin-cancel{background:rgba(226,75,74,.3);color:#f5a5a5}
+
+/* ═══ HISTORIAL ═══ */
+.h-unit{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:12px;padding:11px 13px;margin-bottom:8px;border:1.5px solid var(--brd);cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,.05);transition:transform .1s}
+.h-unit:active{transform:scale(.98)}
+.h-unum{border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
+.h-unum-ok{background:linear-gradient(180deg,#c8f0d4,#8ed5a0);color:#1a5c2a;box-shadow:0 3px 0 #4a9460}
+.h-unum-ko{background:linear-gradient(180deg,#f07070,#c93232);color:#fff;box-shadow:0 3px 0 #8f1f1f}
+.h-unum-new{background:#f3f4f6;color:var(--mut);border:1.5px solid var(--brd)}
+.h-uinfo{flex:1}
+.h-uname{font-size:14px;font-weight:700;color:var(--txt)}
+.h-ulast{font-size:11px;color:var(--mut);margin-top:2px}
+.h-arrow{font-size:16px;color:var(--mut)}
+.ht-item{position:relative;margin-bottom:12px}
+.ht-dot{position:absolute;left:-20px;top:6px;width:12px;height:12px;border-radius:50%;border:2.5px solid var(--gy)}
+.ht-ok{background:#1D9E75}.ht-rep{background:#EF9F27}.ht-ko{background:#E24B4A}.ht-prev{background:#3b82f6}.ht-otro{background:#8b5cf6}
+.ht-card{background:var(--card);border-radius:10px;padding:11px 13px;border:1.5px solid var(--brd)}
+.ht-date{font-size:11px;color:var(--mut);font-weight:600;margin-bottom:3px}
+.ht-type{font-size:14px;font-weight:700;color:var(--txt)}
+.ht-note{font-size:12px;color:var(--mut);margin-top:4px;line-height:1.4;font-style:italic}
+.fg{margin-bottom:0}
+
+/* Historial grid — amber for "revisar" state */
+.reg.hist-am{background:linear-gradient(180deg,#ffe5ab,#f5c460);color:#633806;border:1px solid #e8b84b;box-shadow:0 3px 0 #9a6005}
+
+/* ═══ HISTORIAL GRID ═══ */
+.hgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+.hreg{border-radius:10px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;user-select:none;position:relative;transition:transform .1s;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+.hreg:active{transform:scale(.9)}
+.hreg-n{font-size:15px;font-weight:800;line-height:1}
+.hreg-dot{position:absolute;bottom:4px;right:5px;font-size:7px;opacity:.7}
+.hreg-ok{background:linear-gradient(180deg,#c8f0d4,#7ec893);color:#1a5c2a;border:1px solid #6ab87c;box-shadow:0 3px 0 #3d8c4d}
+.hreg-ko{background:linear-gradient(180deg,#f07070,#c93232);color:#fff;border:1px solid #a02525;box-shadow:0 3px 0 #7a1515}
+.hreg-am{background:linear-gradient(180deg,#ffe5ab,#f5c460);color:#633806;border:1px solid #e8b84b;box-shadow:0 3px 0 #9a6005}
+.hreg-new{background:#f3f4f6;color:#9ca3af;border:1.5px solid #e5e7eb;box-shadow:0 2px 0 #d1d5db}
+
+/* ═══ SCROLL HINT ═══ */
+#scrollHint{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  background:rgba(13,104,69,.88);
+  border-radius:20px;
+  padding:18px 28px;
+  z-index:250;
+  pointer-events:none;
+  backdrop-filter:blur(4px);
+  border:1.5px solid rgba(93,202,165,.5);
+}
+#scrollHint .sh-arr{font-size:32px;color:#fff;animation:bounceDown 1s ease infinite}
+#scrollHint .sh-txt{font-size:15px;font-weight:800;color:#fff;letter-spacing:.8px;text-transform:uppercase}
+@keyframes bounceDown{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+</style>
+</head>
+<body>
+
+<!-- ══════ LOGIN ══════ -->
+<div id="loginScreen">
+  <div class="logo">🤿</div>
+  <div class="ltitle">Mantenimiento de Equipo</div>
+  <div class="lsub">Buceo Hispania — Control en tiempo real</div>
+  <div class="lcard">
+    <label>¿Quién eres?</label>
+    <select id="loginSelect"><option value="">— Selecciona tu nombre —</option></select>
+    <button class="lbtn" onclick="doLogin()">Entrar →</button>
+  </div>
+  <p class="lnote">Configura FIREBASE_CONFIG en el código para activar la sincronización en tiempo real entre dispositivos.</p>
+<button onclick="clearAndReload()" style="margin-top:14px;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.4);color:#fff;border-radius:12px;padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer;display:block;width:100%">🔄 Restablecer datos locales</button>
+</div>
+
+<!-- ══════ MAIN APP ══════ -->
+<div id="mainApp">
+  <div id="offlineBanner">⚠️ Sin conexión — sincronizará al reconectar</div>
+  <div class="hdr">
+    <div class="hrow">
+      <div>
+        <div class="htitle">🤿 Mantenimiento de Equipo</div>
+        <div class="hdate" id="hDate"></div>
+      </div>
+      <div class="hright">
+        <button class="hbtn" onclick="openSettings()" title="Ajustes">⚙️</button>
+        <button class="hbtn" onclick="openChat()" title="Mensajes" style="position:relative">✉️
+          <span class="nbadge" id="chatBadge" style="border-color:#0F6E56"></span>
+        </button>
+        <button class="hbtn" onclick="switchTab('averias')" title="Averías" style="position:relative;display:none">🔧
+          <span class="nbadge" id="nBadge"></span>
+        </button>
+      </div>
+    </div>
+    <div class="sync-row">
+      <div class="sdot" id="sdot"></div>
+      <span class="stext" id="stext">Iniciando…</span>
+      <div style="flex:1"></div>
+      <div class="uchip" id="uChip"></div>
+    </div>
+    <div class="tabs">
+      <div class="tab on" data-tab="reservar" onclick="switchTab('reservar')">
+        <span class="tab-icon">📋</span><span class="tab-lbl">Reservar</span>
+      </div>
+      <div class="tab" data-tab="estado" onclick="switchTab('estado')">
+        <span class="tab-icon">📊</span><span class="tab-lbl">Estado</span>
+      </div>
+      <div class="tab" data-tab="misreservas" onclick="switchTab('misreservas')">
+        <span class="tab-icon">👤</span><span class="tab-lbl">Mis Res.</span>
+      </div>
+      <div class="tab" data-tab="averias" onclick="switchTab('averias')">
+        <span class="tab-icon">🔧</span><span class="tab-lbl">Averías</span>
+      </div>
+      <div class="tab" data-tab="historial" onclick="switchTab('historial')">
+        <span class="tab-icon">📖</span><span class="tab-lbl">Historial</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RESERVAR ── -->
+  <div class="page on" id="page-reservar">
+    <div id="avisoVence"></div>
+    <span class="lbl">Instructor</span>
+    <select class="fsel" id="rInstructor"></select>
+    <span class="lbl">Actividad</span>
+    <div class="act-row" id="rActRow"></div>
+    <div class="tipo-block">
+      <span class="lbl" style="margin-bottom:9px">Tipo de equipo</span>
+      <div class="tipo-row" id="tipoRow"></div>
+    </div>
+    <div class="dias-block">
+      <div class="dias-head">
+        <span class="lbl" style="margin:0">Días de reserva</span>
+        <span class="dias-until" id="diasUntil">—</span>
+      </div>
+      <div class="stepper">
+        <button class="sp-btn sp-minus" onclick="changeDias(-1)">−</button>
+        <div class="sp-val">
+          <div class="sp-num" id="diasNum">1</div>
+          <div class="sp-sub">día(s)</div>
+        </div>
+        <button class="sp-btn sp-plus" onclick="changeDias(1)">+</button>
+      </div>
+      <div class="quick-days" id="quickDays"></div>
+    </div>
+    <div class="ctr-bar">
+      <span>Seleccionados</span>
+      <b id="selCount">0</b>
+      <span class="cpill ok" id="freeCount">50 libres</span>
+    </div>
+    <div class="legend">
+      <div class="li"><div class="ld" style="background:linear-gradient(#c8f0d4,#7ec893);border:1px solid #6ab87c"></div>Libre</div>
+      <div class="li"><div class="ld" style="background:linear-gradient(#2ed499,#13865B)"></div>Mis seleccionados</div>
+      <div class="li"><div class="ld" style="background:linear-gradient(#ffd5d5,#f5a5a5);border:1px solid #e88080"></div>Ocupado</div>
+      <div class="li"><div class="ld" style="background:linear-gradient(#f07070,#c93232)"></div>Avería KO</div>
+      <div class="li"><div class="ld" style="background:#e5e7eb;border:1px solid #d1d5db"></div>Baja</div>
+    </div>
+    <div class="rgrid" id="mainGrid"></div>
+    <div id="confirmInfo" style="background:var(--gp);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--gd);font-weight:700;display:none;border:1px solid var(--gl)"></div>
+    <button class="btn-green" id="confirmBtn" onclick="confirmReservation()" disabled>Selecciona elementos para confirmar</button>
+  </div>
+
+  <!-- ── ESTADO ── -->
+  <div class="page" id="page-estado">
+    <div class="tipo-block" style="margin-bottom:14px">
+      <span class="lbl" style="margin-bottom:9px">Tipo de equipo</span>
+      <div class="tipo-row" id="estadoTipoRow"></div>
+    </div>
+    <div class="stat-row" style="grid-template-columns:repeat(3,1fr)" id="statsRow"></div>
+    <div class="sec-t">Reservas activas</div>
+    <div id="activeResList"></div>
+    <div class="sec-t" id="estadoGridTitle">Vista global</div>
+    <div class="legend">
+      <div class="li"><div class="ld" style="background:linear-gradient(#c8f0d4,#7ec893);border:1px solid #6ab87c"></div>Libre</div>
+      <div class="li"><div class="ld" style="background:linear-gradient(#ffd5d5,#f5a5a5)"></div>En uso</div>
+      <div class="li"><div class="ld" style="background:linear-gradient(#f07070,#c93232)"></div>KO ⚡</div>
+    </div>
+    <div class="rgrid" id="statusGrid"></div>
+  </div>
+
+  <!-- ── MIS RESERVAS ── -->
+  <div class="page" id="page-misreservas">
+    <div id="myResList"></div>
+  </div>
+
+  <!-- ── AVERÍAS ── -->
+  <div class="page" id="page-averias">
+    <div class="stat-row" style="grid-template-columns:repeat(3,1fr)" id="avStats"></div>
+    <div class="sec-t">Requieren reparación</div>
+    <div id="koList"></div>
+    <div class="sec-t">Reparados recientemente</div>
+    <div id="fixedList"></div>
+  </div>
+</div>
+
+
+  <!-- ── HISTORIAL ── -->
+  <div class="page" id="page-historial">
+    <div id="histListView">
+      <div id="histTipoRow" class="tipo-row" style="margin-bottom:10px"></div>
+      <div id="histSubtitle" style="font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px"></div>
+      <div class="legend" style="margin-bottom:8px">
+        <div class="li"><div class="ld" style="background:linear-gradient(#c8f0d4,#8ed5a0);border:1px solid #6ab87c"></div>Revisado OK</div>
+        <div class="li"><div class="ld" style="background:linear-gradient(#f07070,#c93232)"></div>KO / Avería</div>
+        <div class="li"><div class="ld" style="background:linear-gradient(#ffe5ab,#f5c460)"></div>Reparación</div>
+        <div class="li"><div class="ld" style="background:#e5e7eb;border:1px solid #d1d5db"></div>Sin registro</div>
+      </div>
+      <div id="histGrid" class="hgrid"></div>
+    </div>
+    <div id="histDetailView" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <button onclick="histBack()" style="background:var(--card);border:1.5px solid var(--brd);border-radius:11px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.08)">← Volver</button>
+        <div>
+          <div style="font-size:17px;font-weight:800;color:var(--txt)" id="histDetailTitle"></div>
+          <div style="font-size:11px;color:var(--mut)" id="histDetailCount"></div>
+        </div>
+      </div>
+      <div class="card" style="border-left:4px solid var(--gb);margin-bottom:14px">
+        <span class="lbl" style="margin-bottom:10px">Añadir revisión o reparación</span>
+        <span class="lbl" style="margin-top:8px">Tipo de registro</span>
+        <select class="fsel" id="histRecType" style="margin-bottom:10px">
+          <option value="revision">✅ Revisión anual</option>
+          <option value="reparacion">🔧 Reparación</option>
+          <option value="averia">⚡ Avería</option>
+          <option value="preventivo">🛠️ Mantenimiento preventivo</option>
+          <option value="otro">📝 Otro</option>
+        </select>
+        <span class="lbl">Fecha</span>
+        <input type="date" class="fsel" id="histRecDate" style="margin-bottom:10px">
+        <span class="lbl">Observaciones</span>
+        <textarea class="fsel" id="histRecNotes" rows="2" style="resize:none;margin-bottom:12px;font-family:inherit" placeholder="Descripción del trabajo realizado..."></textarea>
+        <button class="btn-green" onclick="saveHistRecord()" style="padding:13px;font-size:14px">💾 Guardar registro</button>
+      </div>
+      <div class="sec-t">Historial de esta unidad</div>
+      <div id="histTimeline" style="padding-left:26px;position:relative">
+        <div style="position:absolute;left:9px;top:0;bottom:0;width:2px;background:var(--brd);border-radius:1px"></div>
+      </div>
+    </div>
+  </div>
+
+<!-- ── TAKEN POPUP ── -->
+<div class="overlay" id="takenOverlay" onclick="if(event.target===this)closeOverlay('takenOverlay')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">
+      <span id="tTitle">No disponible</span>
+      <button class="close-btn" onclick="closeOverlay('takenOverlay')">✕</button>
+    </div>
+    <div style="background:var(--rb);border-radius:12px;padding:11px 14px;margin-bottom:14px;font-size:14px;color:var(--rt);font-weight:700">Este equipo no está disponible ahora mismo</div>
+    <div id="tRows"></div>
+    <button id="tLoanBtn" style="display:none;width:100%;padding:13px;border-radius:13px;border:none;font-size:14px;font-weight:800;color:#fff;cursor:pointer;background:linear-gradient(180deg,#4a9de8,#2473c8);box-shadow:0 4px 0 #1a5ea0;margin-top:12px"></button>
+    <div style="background:var(--ab);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--at);margin-top:10px;font-weight:600">Elige otro elemento disponible (verde) para tu actividad.</div>
+  </div>
+</div>
+
+<!-- ── KO MODAL ── -->
+<div class="overlay" id="koOverlay" onclick="if(event.target===this)closeOverlay('koOverlay')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">
+      <span id="koTitle">Reportar avería</span>
+      <button class="close-btn" onclick="closeOverlay('koOverlay')">✕</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;background:var(--rb);border-radius:12px;padding:12px">
+      <div id="koNumDisp" style="background:linear-gradient(180deg,#f07070,#c93232);border-radius:10px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;box-shadow:0 3px 0 #8f1f1f;flex-shrink:0"></div>
+      <div>
+        <div id="koSubtitle" style="font-size:14px;font-weight:700;color:var(--rt)"></div>
+        <div style="font-size:12px;color:var(--rt);margin-top:2px;opacity:.8">Será notificado al encargado inmediatamente</div>
+      </div>
+    </div>
+    <span class="lbl">¿Qué le pasa? Describe la avería</span>
+    <textarea class="ko-textarea" id="koDesc" placeholder="Ej: Fuga continua en la 2ª etapa, no cierra bien la válvula..."></textarea>
+    <div style="display:flex;gap:8px">
+      <button class="btn-ghost" style="flex:1;padding:13px" onclick="closeOverlay('koOverlay')">Cancelar</button>
+      <button class="btn-red" style="flex:2;padding:13px" onclick="confirmKo()">⚡ Confirmar avería</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── PIN OVERLAY ── -->
+<div id="pinOverlay" style="display:none;position:fixed;inset:0;background:linear-gradient(160deg,#14856A,#085041 60%,#04342C);z-index:450;flex-direction:column;align-items:center;justify-content:center;padding:32px">
+  <div style="font-size:48px;margin-bottom:16px">🔒</div>
+  <div style="font-size:20px;font-weight:800;color:#fff;margin-bottom:6px">Área de encargados</div>
+  <div style="font-size:13px;color:#9FE1CB;margin-bottom:28px;text-align:center">Introduce el PIN de 4 dígitos</div>
+  <div id="pinDots" style="display:flex;justify-content:center;gap:14px;margin-bottom:28px">
+    <div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div>
+  </div>
+  <div id="pinError" style="font-size:13px;color:#f5a5a5;font-weight:700;margin-bottom:16px;min-height:20px;text-align:center"></div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:260px">
+    <button class="pin-key" onclick="pinKey('1')">1</button>
+    <button class="pin-key" onclick="pinKey('2')">2</button>
+    <button class="pin-key" onclick="pinKey('3')">3</button>
+    <button class="pin-key" onclick="pinKey('4')">4</button>
+    <button class="pin-key" onclick="pinKey('5')">5</button>
+    <button class="pin-key" onclick="pinKey('6')">6</button>
+    <button class="pin-key" onclick="pinKey('7')">7</button>
+    <button class="pin-key" onclick="pinKey('8')">8</button>
+    <button class="pin-key" onclick="pinKey('9')">9</button>
+    <button class="pin-key pin-cancel" onclick="closePinOverlay()">✕</button>
+    <button class="pin-key" onclick="pinKey('0')">0</button>
+    <button class="pin-key pin-del" onclick="pinDel()">⌫</button>
+  </div>
+  <div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:24px">PIN por defecto: 1234 · cámbialo en Ajustes</div>
+</div>
+
+<!-- ── SETTINGS ── -->
+<div id="settingsOverlay">
+  <div class="set-inner">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <span style="font-size:18px;font-weight:800">⚙️ Configuración</span>
+      <button class="close-btn" onclick="closeOverlay('settingsOverlay');saveSettings()">✕</button>
+    </div>
+    <div class="set-sec">
+      <h3>👨‍🏫 Instructores</h3>
+      <div class="tag-list" id="instrTags"></div>
+      <div class="add-row">
+        <input id="niInput" placeholder="Nombre del instructor" onkeydown="if(event.key==='Enter')addInstructor()">
+        <button onclick="addInstructor()">+</button>
+      </div>
+    </div>
+    <div class="set-sec">
+      <h3>🔧 Encargados de reparación</h3>
+      <div style="font-size:12px;color:var(--mut);margin-bottom:8px">Solo ellos pueden marcar un equipo como reparado</div>
+      <div class="tag-list" id="managerTags"></div>
+      <div class="add-row">
+        <input id="nmInput" placeholder="Nombre del encargado" onkeydown="if(event.key==='Enter')addManager()">
+        <button onclick="addManager()">+</button>
+      </div>
+    </div>
+    <div class="set-sec">
+      <h3>📋 Actividades</h3>
+      <div class="tag-list" id="actTags"></div>
+      <div class="add-row">
+        <input id="naInput" placeholder="Nueva actividad" onkeydown="if(event.key==='Enter')addActivity()">
+        <button onclick="addActivity()">+</button>
+      </div>
+    </div>
+    <div class="set-sec">
+      <h3>📦 Tipos de equipo</h3>
+      <div class="tag-list" id="tipoTags"></div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input id="ntInput" class="add-row" style="flex:1;background:var(--gy);border:1.5px solid var(--brd);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit" placeholder="Nombre del tipo (ej: Trajes)">
+        <input id="ntCount" type="number" min="1" max="200" style="width:70px;background:var(--gy);border:1.5px solid var(--brd);border-radius:10px;padding:10px;font-size:14px;font-family:inherit;text-align:center" placeholder="Nº" value="20">
+        <button onclick="addTipo()" style="background:linear-gradient(180deg,#22b584,#13865B);color:#fff;border:none;border-radius:10px;padding:10px 14px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 3px 0 #0a5c3f">+</button>
+      </div>
+      <div style="font-size:11px;color:var(--mut);margin-bottom:8px">Nombre + número de unidades disponibles</div>
+    </div>
+    <div class="set-sec">
+      <h3>🔴 Equipos fuera de servicio</h3>
+      <div class="tag-list" id="osTags"></div>
+      <div style="display:flex;gap:8px">
+        <select class="fsel" id="osType" style="margin-bottom:0;flex:1" onchange="populateOsNums()"><option value="">Tipo...</option></select>
+        <select class="fsel" id="osNum" style="margin-bottom:0;flex:1"><option value="">Nº...</option></select>
+        <button onclick="addOutOfService()" style="background:linear-gradient(180deg,#f07070,#c93232);color:#fff;border:none;border-radius:10px;padding:10px 12px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 3px 0 #8f1f1f;white-space:nowrap">Dar baja</button>
+      </div>
+    </div>
+    <div class="set-sec">
+      <h3>🔒 PIN de acceso a Ajustes</h3>
+      <div style="font-size:12px;color:var(--mut);margin-bottom:8px">PIN actual: <b id="pinDisplay">••••</b></div>
+      <div style="display:flex;gap:8px">
+        <input id="pinNewInput" type="number" maxlength="4" placeholder="Nuevo PIN (4 dígitos)" style="flex:1;background:var(--gy);border:1.5px solid var(--brd);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit">
+        <button onclick="changePin()" style="background:linear-gradient(180deg,#22b584,#13865B);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 3px 0 #0a5c3f;white-space:nowrap">Cambiar</button>
+      </div>
+    </div>
+    <button onclick="closeOverlay('settingsOverlay');saveSettings()" style="width:100%;background:linear-gradient(180deg,#22b584,#13865B);color:#fff;border:none;border-radius:13px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #0a5c3f;margin-top:8px">Guardar y cerrar</button>
+  </div>
+</div>
+
+<!-- ── CHAT OVERLAY ── -->
+<div id="chatOverlay">
+  <div class="chat-panel">
+    <div class="chat-header">
+      <span style="font-size:22px">✉️</span>
+      <span class="chat-title">Mensajes privados</span>
+      <span class="uchip" id="chatUserChip" style="margin-right:8px"></span>
+      <button class="chat-close" onclick="closeChat()">✕</button>
+    </div>
+    <div class="chat-tabs">
+      <div class="chat-tab on" id="ctab-inbox" onclick="switchChatTab('inbox')">
+        📥 Recibidos <span id="inboxCountLbl"></span>
+      </div>
+      <div class="chat-tab" id="ctab-sent" onclick="switchChatTab('sent')">
+        📤 Enviados
+      </div>
+      <div class="chat-tab" id="ctab-compose" onclick="switchChatTab('compose')">
+        ✏️ Nuevo
+      </div>
+    </div>
+
+    <!-- COMPOSE -->
+    <div id="chat-compose-area" style="display:none">
+      <div class="chat-compose">
+        <div class="chat-to-row">
+          <span class="chat-to-lbl">Para:</span>
+          <select class="chat-to-sel" id="chatToSel">
+            <option value="">— Selecciona compañero —</option>
+          </select>
+        </div>
+        <textarea class="chat-textarea" id="chatMsgInput" placeholder="Escribe tu mensaje..."></textarea>
+        <button class="chat-send-btn" id="chatSendBtn" onclick="sendMessage()">
+          ✉️ Enviar mensaje
+        </button>
+      </div>
+    </div>
+
+    <!-- INBOX -->
+    <div id="chat-inbox-area" class="chat-list">
+      <div class="empty"><div class="empty-ico">📭</div><p>Sin mensajes recibidos.</p></div>
+    </div>
+
+    <!-- SENT -->
+    <div id="chat-sent-area" class="chat-list" style="display:none">
+      <div class="empty"><div class="empty-ico">📤</div><p>Sin mensajes enviados.</p></div>
+    </div>
+  </div>
+</div>
+
+<div id="scrollHint">
+  <div class="sh-arr">↑</div>
+  <div class="sh-txt">Desliza</div>
+</div>
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+<script>
+// ╔════════════════════════════════════════════╗
+// ║  FIREBASE CONFIG — pegar aquí tu config   ║
+// ╚════════════════════════════════════════════╝
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyAe-tprzn4hwRpHMSfhZGjdyrpGEC6kCAY",
+  authDomain:        "hispania-equipo.firebaseapp.com",
+  databaseURL:       "https://hispania-equipo-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "hispania-equipo",
+  storageBucket:     "hispania-equipo.firebasestorage.app",
+  messagingSenderId: "90000881593",
+  appId:             "1:90000881593:web:841a98b5c30bf187eda868"
+};
+
+// ── STATE ──
+let currentUser = null;
+let selActivity = '';
+let selTipo = '';
+let selDias = 1;
+let selRegs = new Set();
+let pendingKo = null;
+let selForReturn = {}; // {resId: Set of nums selected for return}
+let db = null, useFirebase = false;
+let appData = {
+  reservations: {},
+  regStatus: {},
+  messages: {},
+  settings: {
+    instructors: [],
+    activities: [],
+    tipos: [],
+    outOfService: []
+  }
+};
+
+// ── HELPERS ──
+function today(){ return new Date().toISOString().split('T')[0]; }
+function addDays(d,n){ const dt=new Date(d+'T12:00:00'); dt.setDate(dt.getDate()+n); return dt.toISOString().split('T')[0]; }
+function fmtDate(d){ if(!d)return'—'; const[y,m,day]=d.split('-'); return`${day}/${m}/${y}`; }
+function fmtDateLong(d){ if(!d)return'—'; return new Date(d+'T12:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'long'}); }
+function uuid(){ return Date.now().toString(36)+Math.random().toString(36).substr(2); }
+let _toastT;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(_toastT); _toastT=setTimeout(()=>t.classList.remove('show'),2800);
+}
+function closeOverlay(id){ document.getElementById(id).classList.remove('open'); }
+
+// ── FIREBASE ──
+function initFirebase(){
+  if(FIREBASE_CONFIG.apiKey==='TU_API_KEY'){ initLocal(); return; }
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.database();
+    db.ref('.info/connected').on('value', snap=>{
+      const on = snap.val();
+      document.getElementById('sdot').className = 'sdot'+(on?'':' off');
+      document.getElementById('stext').textContent = on ? 'En tiempo real · Firebase' : 'Sin conexión';
+      document.getElementById('offlineBanner').style.display = on ? 'none' : 'block';
+    });
+    db.ref('hispania').keepSynced(true);
+    useFirebase = true;
+    db.ref('hispania').on('value', snap=>{
+      const data = snap.val() || {};
+      appData.reservations = data.reservations || {};
+      appData.regStatus    = data.regStatus    || {};
+      appData.messages     = data.messages     || {};
+      if(data.settings){
+        const merged = {...appData.settings, ...data.settings};
+        if(!merged.instructors||!merged.instructors.length) merged.instructors = ['Valentín'];
+        if(!merged.tipos||!merged.tipos.length) merged.tipos = [{name:'Reguladores',count:50},{name:'Chalecos BCD',count:20}];
+        if(!merged.managers||!merged.managers.length) merged.managers = ['Valentín'];
+        appData.settings = merged;
+      } else {
+        // No settings in Firebase yet — ensure defaults
+        if(!appData.settings.instructors||!appData.settings.instructors.length) appData.settings.instructors=['Valentín'];
+        if(!appData.settings.managers||!appData.settings.managers.length) appData.settings.managers=['Valentín'];
+      }
+      if(data.historial) appData.historial = data.historial;
+      if(data.loans) appData.loans = Array.isArray(data.loans) ? data.loans : Object.values(data.loans);
+      if(data.loanNotifications) appData.loanNotifications = Array.isArray(data.loanNotifications) ? data.loanNotifications : Object.values(data.loanNotifications);
+      saveLocal(); renderAll(); updateChatBadge();
+    });
+  } catch(e){ console.warn(e); initLocal(); }
+}
+function initLocal(){
+  useFirebase = false;
+  document.getElementById('sdot').className = 'sdot off';
+  document.getElementById('stext').textContent = 'Solo local (configura Firebase)';
+  populateLoginSelect();
+  renderAll();
+}
+function fbSet(path, val){ if(useFirebase&&db) db.ref('hispania/'+path).set(val); saveLocal(); }
+function fbUpdate(path, val){ if(useFirebase&&db) db.ref('hispania/'+path).update(val); saveLocal(); }
+function fbRemove(path){ if(useFirebase&&db) db.ref('hispania/'+path).remove(); }
+
+// ── LOCAL STORAGE ──
+function saveLocal(){ try{ localStorage.setItem('hispania_equipo', JSON.stringify(appData)); }catch(e){} }
+function loadLocal(){
+  try{
+    const r=localStorage.getItem('hispania_equipo');
+    if(r){
+      const d=JSON.parse(r);
+      // Deep merge settings to preserve defaults for missing keys
+      if(d.settings) d.settings = {...appData.settings, ...d.settings};
+      appData={...appData,...d};
+    }
+  }catch(e){}
+  if(!appData.settings.instructors || !appData.settings.instructors.length) appData.settings.instructors=['Valentín'];
+  if(!appData.settings.managers || !appData.settings.managers.length) appData.settings.managers=['Valentín'];
+  if(!appData.settings.activities.length) appData.settings.activities=['Fun Dive','Refresh','Curso','Bautismo'];
+  if(!appData.settings.tipos || !appData.settings.tipos.length) appData.settings.tipos=[{name:'Reguladores',count:50},{name:'Chalecos BCD',count:20}];
+  if(!appData.settings.outOfService) appData.settings.outOfService=[];
+  if(!appData.messages) appData.messages={};
+}
+
+// ── DATE HEADER ──
+function setDateHeader(){
+  document.getElementById('hDate').textContent =
+    new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+
+// ── GET ITEM STATE ──
+function getItemState(tipo, num){
+  const key = tipo+'_'+num;
+  const s = appData.regStatus[key] || {};
+  if(s.status==='out_of_service') return {state:'out'};
+  if(s.status==='ko') return {state:'ko', instructor:s.reportedBy, activity:s.activity, desc:s.desc};
+  const t = today();
+  for(const [id,res] of Object.entries(appData.reservations)){
+    if(res.returned || res.endDate < t) continue;
+    if(res.tipo !== tipo) continue;
+    if(!res.items || !res.items.includes(num)) continue;
+    const ko = res.itemKo && res.itemKo[num];
+    if(ko) return {state:'ko', instructor:res.instructor, activity:res.activity, until:res.endDate, resId:id, desc:res.itemKo[num+'_desc']||''};
+    return {state:'taken', instructor:res.instructor, activity:res.activity, until:res.endDate, endDate:res.endDate, resId:id};
+  }
+  return {state:'free'};
+}
+
+function getMyActive(){
+  const t = today();
+  return Object.entries(appData.reservations)
+    .filter(([,r])=> r.instructor===currentUser && !r.returned && r.endDate>=t)
+    .sort((a,b)=> b[1].createdAt - a[1].createdAt);
+}
+
+function getKoList(){
+  const kos = [], t = today();
+  for(const [id,res] of Object.entries(appData.reservations)){
+    if(res.returned || res.endDate < t) continue;
+    if(!res.itemKo) continue;
+    for(const [k,v] of Object.entries(res.itemKo)){
+      if(typeof v !== 'boolean') continue;
+      if(!v) continue;
+      const num = parseInt(k);
+      if(!kos.find(x=>x.key===res.tipo+'_'+num)){
+        kos.push({key:res.tipo+'_'+num, num, tipo:res.tipo, instructor:res.instructor, activity:res.activity, at:res.createdAt, resId:id, desc:res.itemKo[k+'_desc']||''});
+      }
+    }
+  }
+  for(const [key,s] of Object.entries(appData.regStatus)){
+    if(s.status==='ko' && !kos.find(x=>x.key===key)){
+      const parts = key.split('_'); const num = parseInt(parts[parts.length-1]); const tipo = parts.slice(0,-1).join('_');
+      kos.push({key, num, tipo, instructor:s.reportedBy, activity:s.activity, at:s.reportedAt, desc:s.desc||''});
+    }
+  }
+  return kos;
+}
+
+// ── LOGIN ──
+function populateLoginSelect(){
+  const sel = document.getElementById('loginSelect');
+  sel.innerHTML = '<option value="">— Selecciona tu nombre —</option>';
+  appData.settings.instructors.forEach(i=>{ const o=document.createElement('option'); o.value=o.textContent=i; sel.appendChild(o); });
+}
+function doLogin(){
+  const v = document.getElementById('loginSelect').value;
+  if(!v){ showToast('Selecciona tu nombre'); return; }
+  currentUser = v;
+  document.getElementById('loginScreen').style.display = 'none';
+  const app = document.getElementById('mainApp');
+  app.style.display = 'flex'; app.style.flexDirection = 'column';
+  document.getElementById('uChip').textContent = currentUser;
+  setDateHeader();
+  populateFormSelects();
+  updateDiasUI();
+  initFirebase();
+  setTimeout(updateChatBadge, 300);
+}
+
+// ── TABS ──
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.tab===name));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on', p.id==='page-'+name));
+  if(name==='misreservas') renderMyReservations();
+  if(name==='averias') renderAverias();
+  if(name==='estado') renderEstado();
+  if(name==='historial'){
+    const lv=document.getElementById('histListView');
+    const dv=document.getElementById('histDetailView');
+    if(lv) lv.style.display='block';
+    if(dv) dv.style.display='none';
+    histUnitSel=null;
+    initHistTipo();
+    // Scroll page to top
+    const ph = document.getElementById('page-historial');
+    if(ph) ph.scrollTop=0;
+    window.scrollTo(0,0);
+    setTimeout(renderHistPage, 20);
+  }
+}
+
+// ── RENDER ALL ──
+function renderAll(){
+  // Refresh login dropdown in case Firebase updated settings
+  if(document.getElementById('loginScreen').style.display !== 'none'){
+    populateLoginSelect();
+  }
+  renderGrid();
+  renderEstado();
+  renderMyReservations();
+  renderAverias();
+  updateNotifBadge();
+  renderAvisoVence();
+  const hp = document.getElementById('page-historial');
+  if(hp && hp.classList.contains('on')) renderHistPage();
+}
+
+// ── POPULATE FORM ──
+function populateFormSelects(){
+  // Instructor
+  const ri = document.getElementById('rInstructor');
+  ri.innerHTML = '';
+  appData.settings.instructors.forEach(i=>{ const o=document.createElement('option'); o.value=o.textContent=i; ri.appendChild(o); });
+  ri.value = currentUser || '';
+  // Activities
+  const row = document.getElementById('rActRow'); row.innerHTML='';
+  appData.settings.activities.forEach((a,i)=>{
+    const div=document.createElement('div'); div.className='apill'+(a===selActivity?' on':'');
+    div.textContent=a; div.onclick=()=>selectActivity(a); row.appendChild(div);
+    if(i===0&&!selActivity) selectActivity(a);
+  });
+  // Tipos
+  const tr = document.getElementById('tipoRow'); tr.innerHTML='';
+  appData.settings.tipos.forEach((t,i)=>{
+    const div=document.createElement('div'); div.className='ttab'+(t.name===selTipo?' on':'');
+    div.textContent=t.name; div.onclick=()=>selectTipo(t.name); tr.appendChild(div);
+    if(i===0&&!selTipo) selectTipo(t.name);
+  });
+  // Add button
+  const add=document.createElement('div'); add.className='ttab add';
+  add.textContent='+ Tipo'; add.onclick=()=>openSettings(); tr.appendChild(add);
+  // Quick days
+  const qd = document.getElementById('quickDays'); qd.innerHTML='';
+  [1,2,3,5,7,10,14].forEach(d=>{
+    const div=document.createElement('div'); div.className='qd'+(d===selDias?' on':'');
+    div.textContent=d+'d'; div.onclick=()=>{ selDias=d; updateDiasUI(); }; qd.appendChild(div);
+  });
+}
+function selectActivity(a){ selActivity=a; document.querySelectorAll('.apill').forEach(el=>el.classList.toggle('on',el.textContent===a)); }
+function selectTipo(t){ selTipo=t; document.querySelectorAll('.ttab:not(.add)').forEach(el=>el.classList.toggle('on',el.textContent===t)); selRegs.clear(); renderGrid(); }
+
+// ── DÍAS STEPPER ──
+function changeDias(d){ selDias=Math.max(1, selDias+d); updateDiasUI(); }
+function updateDiasUI(){
+  document.getElementById('diasNum').textContent = selDias;
+  const end = addDays(today(), selDias-1);
+  const until = document.getElementById('diasUntil');
+  if(selDias===1){ until.textContent='Devuelve hoy'; until.className='dias-until late'; }
+  else{ until.textContent='Devuelve el '+fmtDateLong(end); until.className='dias-until'; }
+  document.querySelectorAll('.qd').forEach(el=>el.classList.toggle('on',parseInt(el.textContent)===selDias));
+  updateConfirmUI();
+}
+
+// ── CONFIRM UI ──
+function updateConfirmUI(){
+  const n = selRegs.size;
+  const tipo = appData.settings.tipos.find(t=>t.name===selTipo);
+  let free=0;
+  if(tipo){ for(let i=1;i<=tipo.count;i++){ if(getItemState(selTipo,i).state==='free') free++; } }
+  document.getElementById('selCount').textContent = n+(n===1?' elemento':' elementos');
+  const fc=document.getElementById('freeCount'); fc.textContent=free+' disponibles';
+  fc.className='cpill '+(free<5?'warn':'ok');
+  const info=document.getElementById('confirmInfo');
+  const btn=document.getElementById('confirmBtn');
+  if(n>0){
+    info.style.display='block';
+    const end=addDays(today(),selDias-1);
+    info.textContent=n+' '+selTipo+(n>1?' — ':'  — ')+'Devolver antes del '+fmtDateLong(end);
+    btn.disabled=false; btn.textContent='✅ Confirmar reserva ('+n+' elemento'+(n>1?'s':'')+'  · '+selDias+' día'+(selDias>1?'s':'')+')';
+  } else {
+    info.style.display='none'; btn.disabled=true; btn.textContent='Selecciona elementos para confirmar';
+  }
+}
+
+// ── GRID ──
+function renderGrid(){
+  const grid=document.getElementById('mainGrid'); grid.innerHTML='';
+  const tipo=appData.settings.tipos.find(t=>t.name===selTipo);
+  if(!tipo||!selTipo){ grid.innerHTML='<div style="grid-column:span 10;text-align:center;padding:16px;color:var(--mut);font-size:13px">Selecciona un tipo de equipo</div>'; return; }
+  for(let i=1;i<=tipo.count;i++){
+    const info=getItemState(selTipo,i); const isMine=selRegs.has(i);
+    let cls='reg ';
+    if(isMine) cls+='mine';
+    else if(info.state==='free') cls+='free';
+    else if(info.state==='taken') cls+='taken';
+    else if(info.state==='ko') cls+='ko';
+    else cls+='out';
+    const el=document.createElement('div'); el.className=cls;
+    el.innerHTML=i+(info.state==='ko'?'<span class="ko-dot">⚡</span>':'');
+    el.onclick=()=>onItemClick(i,info,isMine);
+    grid.appendChild(el);
+  }
+  updateConfirmUI();
+}
+function onItemClick(num,info,isMine){
+  if(info.state==='out'){ showToast('Equipo '+num+' fuera de servicio'); return; }
+  if(info.state==='ko'||info.state==='taken'){ showTakenPopup(num,info); return; }
+  if(isMine){ selRegs.delete(num); } else { selRegs.add(num); }
+  renderGrid();
+}
+function showTakenPopup(num,info){
+  document.getElementById('tTitle').textContent = selTipo+' '+num+(info.state==='ko'?' — Avería KO':' — En uso');
+  const rows=[];
+  if(info.instructor) rows.push(['Instructor',info.instructor]);
+  if(info.activity) rows.push(['Actividad',info.activity]);
+  if(info.endDate||info.until) rows.push(['Devuelve antes del','<b style="color:var(--rt)">'+fmtDate(info.endDate||info.until)+'</b>']);
+  if(info.state==='ko') rows.push(['Estado','<b style="color:#E24B4A">⚡ Avería reportada — pendiente reparación</b>']);
+  if(info.desc) rows.push(['Descripción','<i style="color:var(--rt)">'+info.desc+'</i>']);
+  document.getElementById('tRows').innerHTML=rows.map(([l,v])=>`<div class="drow"><span class="dlbl">${l}</span><span class="dval">${v}</span></div>`).join('');
+  // Add "Pedir prestado" button if state is taken (not KO, not out) and not own reservation
+  const loanBtn = document.getElementById('tLoanBtn');
+  if(loanBtn){
+    if(info.state==='taken' && info.instructor !== currentUser && info.resId){
+      loanBtn.style.display='block';
+      loanBtn.onclick = ()=>requestLoan(info.resId, selTipo||info.tipo||'', num, info.instructor);
+      loanBtn.textContent = '🤝 Pedir prestado a '+info.instructor;
+    } else {
+      loanBtn.style.display='none';
+    }
+  }
+  document.getElementById('takenOverlay').classList.add('open');
+}
+
+// ── CONFIRM RESERVATION ──
+function confirmReservation(){
+  if(!selRegs.size){ showToast('Selecciona al menos un elemento'); return; }
+  if(!selActivity){ showToast('Selecciona una actividad'); return; }
+  if(!selTipo){ showToast('Selecciona el tipo de equipo'); return; }
+  const instructor=document.getElementById('rInstructor').value;
+  if(!instructor){ showToast('Selecciona el instructor'); return; }
+  const items=Array.from(selRegs);
+  for(const num of items){ const s=getItemState(selTipo,num); if(s.state!=='free'){ showToast(selTipo+' '+num+' ya no disponible'); return; } }
+  const end=addDays(today(),selDias-1);
+  const key=uuid();
+  const res={id:key,instructor,activity:selActivity,tipo:selTipo,items,startDate:today(),endDate:end,dias:selDias,returned:false,returnedAt:null,itemKo:{},createdAt:Date.now()};
+  if(useFirebase&&db) db.ref('hispania/reservations/'+key).set(res);
+  else{ appData.reservations[key]=res; saveLocal(); renderAll(); }
+  selRegs.clear();
+  showToast('✅ Reserva confirmada — '+items.length+' '+selTipo);
+  renderGrid(); switchTab('misreservas');
+}
+
+// ── AVISO VENCE ──
+function renderAvisoVence(){
+  const mine=getMyActive();
+  const t=today();
+  const vencen=mine.filter(([,r])=>r.endDate===t);
+  const el=document.getElementById('avisoVence');
+  if(!vencen.length){ el.innerHTML=''; return; }
+  el.innerHTML=vencen.map(([id,r])=>`
+    <div class="aviso-card">
+      <div style="font-size:22px;margin-bottom:6px">⏰</div>
+      <div style="font-size:16px;font-weight:800;color:#633806">¡Hoy vence tu reserva!</div>
+      <div style="font-size:13px;color:#854F0B;margin-top:4px;margin-bottom:10px">${r.tipo} · ${r.activity} · reservados el ${fmtDate(r.startDate)}</div>
+      <div class="aviso-regs">${(r.items||[]).map(n=>`<div class="av-reg">${n}</div>`).join('')}</div>
+      <button class="btn-amber" style="margin-bottom:10px" onclick="returnReservation('${id}')">✓ Liberar equipos ahora</button>
+      <button style="width:100%;padding:11px;border-radius:12px;border:2px solid var(--am);background:transparent;font-size:14px;font-weight:700;color:#854F0B;cursor:pointer" onclick="extendFromAviso('${id}')">⏳ Ampliar reserva</button>
+    </div>`).join('');
+}
+
+function extendFromAviso(id){
+  document.getElementById('avisoVence').innerHTML='';
+  switchTab('misreservas');
+  setTimeout(()=>{ showToast('Ajusta los días de tu reserva activa'); },400);
+}
+
+// ── ESTADO ──
+let estadoTipoSel = '';
+function setEstadoTipo(t){
+  estadoTipoSel = t;
+  document.querySelectorAll('#estadoTipoRow .ttab:not(.add)').forEach(el=>el.classList.toggle('on',el.textContent===t));
+  renderEstado();
+}
+function renderEstadoTipoRow(){
+  const row = document.getElementById('estadoTipoRow');
+  if(!row) return;
+  row.innerHTML = '';
+  appData.settings.tipos.forEach((t,i)=>{
+    if(!estadoTipoSel && i===0) estadoTipoSel = t.name;
+    const div = document.createElement('div');
+    div.className = 'ttab'+(t.name===estadoTipoSel?' on':'');
+    div.textContent = t.name;
+    div.onclick = ()=>setEstadoTipo(t.name);
+    row.appendChild(div);
+  });
+}
+function renderEstado(){
+  renderEstadoTipoRow();
+  const tipoObj = appData.settings.tipos.find(t=>t.name===estadoTipoSel) || appData.settings.tipos[0];
+  if(!tipoObj){ estadoTipoSel=''; return; }
+  let free=0,inUse=0,ko=0;
+  for(let i=1;i<=tipoObj.count;i++){
+    const s=getItemState(tipoObj.name,i);
+    if(s.state==='free') free++;
+    else if(s.state==='taken') inUse++;
+    else if(s.state==='ko') ko++;
+  }
+  document.getElementById('statsRow').innerHTML=[
+    {n:free,l:'Libres',c:'#1a5c2a'},{n:inUse,l:'En uso',c:'#791F1F'},
+    {n:ko,l:'Avería KO',c:'#E24B4A'}
+  ].map(s=>`<div class="stat"><div class="stat-n" style="color:${s.c||'var(--txt)'}">${s.n}</div><div class="stat-l">${s.l}</div></div>`).join('');
+  const t=today();
+  const active=Object.entries(appData.reservations).filter(([,r])=>!r.returned&&r.endDate>=t).sort((a,b)=>a[1].instructor.localeCompare(b[1].instructor));
+  document.getElementById('activeResList').innerHTML=!active.length
+    ?'<div class="empty"><div class="empty-ico">📋</div><p>Sin reservas activas hoy.</p></div>'
+    :active.map(([,r])=>{
+      const n=r.items?.length||0; const koC=r.itemKo?Object.entries(r.itemKo).filter(([k,v])=>v===true).length:0;
+      const isToday=r.endDate===t;
+      return`<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div><div class="card-name">${r.instructor}</div>
+        <div class="card-sub">${r.tipo} · ${r.activity}</div>
+        <div class="card-sub">Hasta ${fmtDate(r.endDate)}${isToday?' 🔴 Vence hoy':''}</div>
+        <div class="reg-chips">${(r.items||[]).map(x=>`<span class="rc">${x}</span>`).join('')}</div></div>
+        <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">
+          <span class="badge ${n>5?'b-am':'b-ok'}">${n} equipo${n>1?'s':''}</span>
+          ${koC?`<span class="badge b-ko">⚡ ${koC} KO</span>`:''}
+          ${isToday?'<span class="badge b-rd">Hoy</span>':''}
+        </div>
+      </div></div>`;
+    }).join('');
+  // Status grid — filtered by selected tipo
+  const sg=document.getElementById('statusGrid'); sg.innerHTML='';
+  const gt = document.getElementById('estadoGridTitle');
+  if(gt) gt.textContent = 'Vista global — '+tipoObj.name+' ('+tipoObj.count+' unidades)';
+  for(let i=1;i<=tipoObj.count;i++){
+    const info=getItemState(tipoObj.name,i);
+    let cls='reg ';
+    if(info.state==='free') cls+='free'; else if(info.state==='taken') cls+='taken'; else if(info.state==='ko') cls+='ko'; else cls+='out';
+    const el=document.createElement('div'); el.className=cls; el.innerHTML=i+(info.state==='ko'?'<span class="ko-dot">⚡</span>':'');
+    el.onclick=()=>{ if(info.state!=='free') showTakenPopup(i,info); };
+    sg.appendChild(el);
+  }
+}
+
+// ── MIS RESERVAS ──
+function renderMyReservations(){
+  const mine = getMyActive();
+  const el = document.getElementById('myResList');
+  if(!mine.length){
+    el.innerHTML='<div class="empty"><div class="empty-ico">👤</div><p>No tienes reservas activas.<br>Ve a Reservar para coger equipos.</p></div>';
+    return;
+  }
+
+  // ── Group by tipo ──
+  const grouped = {};
+  mine.forEach(([id,r])=>{
+    const t = r.tipo||'Sin tipo';
+    if(!grouped[t]) grouped[t] = {tipo:t, reservations:[], allItems:[], allKo:{}, activities:new Set(), endDates:[], ids:[]};
+    grouped[t].reservations.push([id,r]);
+    grouped[t].ids.push(id);
+    (r.items||[]).forEach(num=>{
+      if(!grouped[t].allItems.includes(num)) grouped[t].allItems.push(num);
+    });
+    if(r.itemKo) Object.assign(grouped[t].allKo, r.itemKo);
+    if(r.activity) grouped[t].activities.add(r.activity);
+    if(r.endDate) grouped[t].endDates.push(r.endDate);
+  });
+
+  // ── Check for loan notifications ──
+  const loanNotifs = (appData.loanNotifications||[]).filter(n=>n.to===currentUser&&!n.read);
+
+  el.innerHTML = '';
+
+  // Loan notifications banner
+  if(loanNotifs.length){
+    loanNotifs.forEach(n=>{
+      const div = document.createElement('div');
+      div.style.cssText = 'background:linear-gradient(135deg,#E6F1FB,#d0e8f7);border-radius:13px;padding:12px 14px;margin-bottom:10px;border:1.5px solid #85B7EB';
+      div.innerHTML = '<div style="font-size:13px;font-weight:800;color:#0C447C;margin-bottom:3px">📬 '+n.message+'</div>'
+        +'<div style="font-size:11px;color:#185FA5">'+formatLoanDate(n.ts)+'</div>';
+      el.appendChild(div);
+    });
+    // Mark as read
+    (appData.loanNotifications||[]).forEach(n=>{ if(n.to===currentUser) n.read=true; });
+    saveLocal();
+  }
+
+  // ── Render one card per tipo ──
+  Object.values(grouped).forEach(group=>{
+    const koMap = group.allKo;
+    const activeItems = group.allItems.filter(num=>!koMap[num]);
+    const t = today();
+    const soonest = group.endDates.sort()[0];
+    const isToday = soonest===t;
+    const daysLeft = Math.max(0,Math.ceil((new Date(soonest+'T23:59:59')-new Date())/86400000));
+
+    // Check for loan items in this group
+    const loanItems = (appData.loans||[]).filter(l=>l.fromUser===currentUser&&l.tipo===group.tipo&&!l.returned);
+    const borrowedItems = (appData.loans||[]).filter(l=>l.toUser===currentUser&&l.tipo===group.tipo&&!l.returned);
+
+    // Items HTML - active only
+    const regsHtml = activeItems.map(num=>{
+      return`<div class="reg-item" id="ri_\${group.tipo}_\${num}">
+        <div class="rnum">\${num}</div>
+        <span class="rlbl">\${group.tipo} \${num}</span>
+        <div class="okko">
+          <button class="ok-on" onclick="setItemKoGrouped('\${group.tipo}',\${num},false)">OK ✓</button>
+          <button class="ko-off" onclick="openKoModalGrouped('\${group.tipo}',\${num})">KO</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Borrowed items HTML (prestados a mí)
+    const borrowedHtml = borrowedItems.map(l=>{
+      return`<div style="background:linear-gradient(135deg,#E6F1FB,#d0e8f7);border-radius:10px;padding:9px 12px;margin-bottom:5px;border:1.5px solid #85B7EB;display:flex;align-items:center;gap:10px">
+        <div class="rnum" style="background:linear-gradient(180deg,#4a9de8,#2473c8);color:#fff;box-shadow:0 2px 0 #1a5ea0">\${l.num}</div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:800;color:#0C447C">Prestado de \${l.fromUser}</div>
+          <div style="font-size:11px;color:#185FA5;margin-top:2px">\${group.tipo} \${l.num}</div>
+        </div>
+        <button onclick="returnLoan('\${l.id}','\${group.tipo}',\${l.num})" style="padding:7px 12px;border-radius:9px;border:none;font-size:11px;font-weight:800;color:#0C447C;background:linear-gradient(180deg,#a8d4f5,#6ab3e8);box-shadow:0 3px 0 #1a5ea0;cursor:pointer;white-space:nowrap">Devolver a \${l.fromUser}</button>
+      </div>`;
+    }).join('');
+
+    // Lent items HTML (prestados por mí)
+    const lentHtml = loanItems.map(l=>{
+      return`<div style="background:linear-gradient(135deg,#FAEEDA,#f5ddb0);border-radius:10px;padding:9px 12px;margin-bottom:5px;border:1.5px solid #f5c460;display:flex;align-items:center;gap:10px">
+        <div class="rnum" style="background:linear-gradient(180deg,#ffe5ab,#f5c460);color:#633806;box-shadow:0 2px 0 #9a6005">\${l.num}</div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:800;color:#633806">Prestado a \${l.toUser}</div>
+          <div style="font-size:11px;color:#854F0B;margin-top:2px">\${group.tipo} \${l.num} · pendiente devolución</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    const actStr = Array.from(group.activities).join(', ');
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.borderLeft = '5px solid var(--gb)';
+
+    // Adjust days stepper uses first reservation id
+    const firstId = group.ids[0];
+    const firstRes = appData.reservations[firstId];
+    const curDias = firstRes ? (firstRes.dias||1) : 1;
+
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div>
+          <div class="card-name">\${group.tipo}</div>
+          <div class="card-sub">\${actStr}</div>
+          <div class="card-sub">Devolver antes del \${fmtDate(soonest)}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">
+          <span class="badge b-ok">Activa</span>
+          \${isToday?'<span class="badge b-rd">⏰ Hoy</span>':daysLeft>0?`<span class="badge b-gy">\${daysLeft}d</span>`:''}
+        </div>
+      </div>
+      <div class="ajustar-block">
+        <div class="ajustar-lbl">Ajustar duración</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="mini-step">
+            <button class="ms-btn ms-minus" onclick="adjustDaysGrouped('\${group.tipo}',-1)">−</button>
+            <div class="ms-val" id="msval_\${group.tipo}">\${curDias}</div>
+            <button class="ms-btn ms-plus" onclick="adjustDaysGrouped('\${group.tipo}',1)">+</button>
+          </div>
+          <div>
+            <div style="font-size:14px;font-weight:700">\${curDias} día\${curDias>1?'s':''}</div>
+            <div style="font-size:12px;font-weight:700;color:var(--gb)" id="adjDate_\${group.tipo}">Vence el \${fmtDateLong(soonest)}</div>
+          </div>
+        </div>
+        <div class="quick-adj">
+          <div class="qa minus" onclick="adjustDaysGrouped('\${group.tipo}',-1)">−1 día</div>
+          <div class="qa plus" onclick="adjustDaysGrouped('\${group.tipo}',1)">+1 día</div>
+          <div class="qa plus" onclick="adjustDaysGrouped('\${group.tipo}',2)">+2 días</div>
+          <div class="qa plus" onclick="adjustDaysGrouped('\${group.tipo}',7)">+7 días</div>
+        </div>
+      </div>
+      \${activeItems.length>0?'<div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--mut);margin-bottom:8px">Mis equipos ('+activeItems.length+')</div>':''}
+      \${regsHtml}
+      \${borrowedItems.length>0?'<div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#185FA5;margin-bottom:6px;margin-top:8px">📥 Prestados a mí ('+borrowedItems.length+')</div>':''}
+      \${borrowedHtml}
+      \${loanItems.length>0?'<div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#854F0B;margin-bottom:6px;margin-top:8px">📤 Prestados por mí ('+loanItems.length+')</div>':''}
+      \${lentHtml}
+      <button class="btn-ghost" style="margin-top:10px" onclick="returnAllGrouped('\${group.tipo}')">✓ Devolver TODOS y cerrar</button>
+    `;
+    el.appendChild(card);
+  });
+}
+
+function adjustDaysGrouped(tipo, delta){
+  const t = today();
+  Object.entries(appData.reservations).forEach(([id,r])=>{
+    if(r.instructor!==currentUser||r.returned||r.endDate<t||r.tipo!==tipo) return;
+    const newDias = Math.max(1,(r.dias||1)+delta);
+    const newEnd = addDays(r.startDate, newDias-1);
+    if(useFirebase&&db) db.ref('hispania/reservations/'+id).update({dias:newDias,endDate:newEnd});
+    else{ appData.reservations[id].dias=newDias; appData.reservations[id].endDate=newEnd; }
+  });
+  if(!useFirebase){saveLocal();renderAll();}
+  const delta2 = delta>0?'+'+delta:delta;
+  showToast('Duración ajustada '+delta2+' día'+(Math.abs(delta)>1?'s':''));
+}
+
+function openKoModalGrouped(tipo, num){
+  // Find the reservation that has this item
+  const t=today();
+  for(const [id,r] of Object.entries(appData.reservations)){
+    if(r.instructor===currentUser&&!r.returned&&r.endDate>=t&&r.tipo===tipo&&r.items&&r.items.includes(num)){
+      openKoModal(id,num,tipo,currentUser,r.activity||'');
+      return;
+    }
+  }
+}
+
+function setItemKoGrouped(tipo, num, ko){
+  const t=today();
+  for(const [id,r] of Object.entries(appData.reservations)){
+    if(r.instructor===currentUser&&!r.returned&&r.endDate>=t&&r.tipo===tipo&&r.items&&r.items.includes(num)){
+      setItemKo(id,num,ko);
+      return;
+    }
+  }
+}
+
+function returnAllGrouped(tipo){
+  if(!confirm('¿Devolver todos los '+tipo+' y cerrar reservas?')) return;
+  const t=today();
+  Object.entries(appData.reservations).forEach(([id,r])=>{
+    if(r.instructor===currentUser&&!r.returned&&r.endDate>=t&&r.tipo===tipo){
+      const upd={returned:true,returnedAt:Date.now()};
+      if(useFirebase&&db) db.ref('hispania/reservations/'+id).update(upd);
+      else appData.reservations[id]={...appData.reservations[id],...upd};
+    }
+  });
+  if(!useFirebase){saveLocal();renderAll();}
+  showToast('✅ '+tipo+' devueltos');
+}
+
+function formatLoanDate(ts){ return ts ? new Date(ts).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})+' · '+new Date(ts).toLocaleDateString('es-ES',{day:'numeric',month:'short'}) : ''; }
+
+// ── LOAN SYSTEM (pedir prestado) ──
+function requestLoan(fromResId, tipo, num, fromUser){
+  if(!appData.loans) appData.loans=[];
+  const loan = {id:uuid(), tipo, num, fromUser, toUser:currentUser, fromResId, returned:false, ts:Date.now()};
+  appData.loans.push(loan);
+  // Remove from original reservation
+  const res = appData.reservations[fromResId];
+  if(res){
+    const newItems = (res.items||[]).filter(i=>i!==num);
+    if(useFirebase&&db){
+      db.ref('hispania/reservations/'+fromResId+'/items').set(newItems);
+      db.ref('hispania/loans/'+loan.id).set(loan);
+    } else {
+      appData.reservations[fromResId].items=newItems;
+    }
+  }
+  // Add notification to original owner
+  if(!appData.loanNotifications) appData.loanNotifications=[];
+  const notif = {id:uuid(), to:fromUser, from:currentUser, message:currentUser+' te ha pedido prestado el '+tipo+' '+num, ts:Date.now(), read:false};
+  appData.loanNotifications.push(notif);
+  if(useFirebase&&db) db.ref('hispania/loanNotifications/'+notif.id).set(notif);
+  if(!useFirebase){saveLocal();renderAll();}
+  closeOverlay('takenOverlay');
+  showToast('📬 Solicitud enviada — '+tipo+' '+num+' ahora es tuyo');
+  switchTab('misreservas');
+}
+
+function returnLoan(loanId, tipo, num){
+  const loan = (appData.loans||[]).find(l=>l.id===loanId);
+  if(!loan) return;
+  loan.returned=true;
+  // Return item to original reservation
+  const res = appData.reservations[loan.fromResId];
+  if(res&&!res.returned){
+    const newItems = [...(res.items||[]), num];
+    if(useFirebase&&db){
+      db.ref('hispania/reservations/'+loan.fromResId+'/items').set(newItems);
+      db.ref('hispania/loans/'+loanId+'/returned').set(true);
+    } else {
+      appData.reservations[loan.fromResId].items=newItems;
+    }
+  }
+  // Notify original owner
+  if(!appData.loanNotifications) appData.loanNotifications=[];
+  const notif={id:uuid(),to:loan.fromUser,from:currentUser,message:currentUser+' te ha devuelto el '+tipo+' '+num,ts:Date.now(),read:false};
+  appData.loanNotifications.push(notif);
+  if(useFirebase&&db) db.ref('hispania/loanNotifications/'+notif.id).set(notif);
+  if(!useFirebase){saveLocal();renderAll();}
+  showToast('✅ '+tipo+' '+num+' devuelto a '+loan.fromUser);
+}
+
+
+function setItemKo(resId, num, ko){
+  if(useFirebase&&db){
+    db.ref(`hispania/reservations/${resId}/itemKo/${num}`).set(false);
+  } else {
+    if(appData.reservations[resId]?.itemKo) appData.reservations[resId].itemKo[num]=false;
+    saveLocal(); renderAll();
+  }
+  showToast('✅ '+selTipo+' '+num+' marcado OK');
+}
+
+function changeActivity(resId, activity){
+  if(useFirebase&&db) db.ref('hispania/reservations/'+resId+'/activity').set(activity);
+  else{ appData.reservations[resId].activity=activity; saveLocal(); renderAll(); }
+  showToast('Actividad cambiada a: '+activity);
+}
+function returnReservation(resId){
+  const upd={returned:true,returnedAt:Date.now()};
+  if(useFirebase&&db) db.ref('hispania/reservations/'+resId).update(upd);
+  else{ appData.reservations[resId]={...appData.reservations[resId],...upd}; saveLocal(); renderAll(); }
+  selForReturn[resId]=new Set();
+  showToast('✅ Todos los equipos devueltos — liberados para el resto');
+}
+
+// ── AVERÍAS ──
+function renderAverias(){
+  const kos=getKoList();
+  const t=today();
+  const recent=Object.entries(appData.reservations).filter(([,r])=>r.returned&&r.itemKo&&Object.values(r.itemKo).some(v=>v===true)).slice(0,6);
+  document.getElementById('avStats').innerHTML=[
+    {n:kos.length,l:'KO activos',c:'#E24B4A'},
+    {n:recent.length,l:'Reparados',c:'#1a5c2a'},
+    {n:kos.length+recent.length,l:'Total mes',c:''}
+  ].map(s=>`<div class="stat"><div class="stat-n" style="color:${s.c||'var(--txt)'}">${s.n}</div><div class="stat-l">${s.l}</div></div>`).join('');
+  document.getElementById('koList').innerHTML=!kos.length
+    ?'<div class="empty"><div class="empty-ico">✅</div><p>Ninguna avería reportada.<br>¡Todo el equipo en orden!</p></div>'
+    :kos.map(k=>`<div class="averia-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div style="font-size:17px;font-weight:800;color:var(--txt)">${k.tipo} ${k.num}</div>
+          <div style="font-size:12px;color:var(--mut);margin-top:3px">${k.instructor||'—'} · ${k.activity||'—'}</div>
+          ${k.at?`<div style="font-size:11px;color:var(--rd);margin-top:2px;font-weight:700">${new Date(k.at).toLocaleDateString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>`:''}
+        </div>
+        <button class="rep-btn" onclick="markRepaired('${k.key}','${k.resId||''}',${k.num})">Reparado ✓</button>
+      </div>
+      ${k.desc?`<div class="desc-box"><div class="desc-label">Descripción de la avería</div><div class="desc-text">"${k.desc}"</div></div>`:''}
+    </div>`).join('');
+  document.getElementById('fixedList').innerHTML=!recent.length
+    ?'<div style="color:var(--mut);font-size:13px;padding:8px 0">Sin historial reciente.</div>'
+    :recent.map(([,r])=>{
+      const kr=Object.entries(r.itemKo||{}).filter(([k,v])=>v===true&&!k.includes('_desc')).map(([n])=>n);
+      return`<div class="averia-card fixed">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:14px;font-weight:700">${r.tipo}: ${kr.join(', ')}</div>
+            <div style="font-size:12px;color:var(--mut)">${r.instructor} · ${r.activity}</div>
+          </div>
+          <span class="badge b-ok">Devuelto</span>
+        </div>
+      </div>`;
+    }).join('');
+}
+function markRepaired(key, resId, num){
+  // Only managers can repair
+  const managers = (appData.settings && appData.settings.managers) || ['Antonio','Iván'];
+  const isManager = managers.some(m => m.toLowerCase() === (currentUser||'').toLowerCase());
+  if(!isManager){
+    showToast('🚫 No tienes permisos para esta función');
+    return;
+  }
+  // Remove item from ALL reservations (it becomes free for anyone)
+  for(const [id,res] of Object.entries(appData.reservations)){
+    if(!res.items || !res.items.includes(num)) continue;
+    if(res.tipo !== (key.includes('_unit_') ? key.split('_unit_')[0].replace(/_/g,' ') : '')) continue;
+    // Remove from items array
+    const newItems = res.items.filter(i=>i!==num);
+    if(useFirebase&&db){
+      db.ref(`hispania/reservations/${id}/items`).set(newItems);
+      db.ref(`hispania/reservations/${id}/itemKo/${num}`).remove();
+    } else {
+      appData.reservations[id].items = newItems;
+      if(appData.reservations[id].itemKo) delete appData.reservations[id].itemKo[num];
+    }
+  }
+  // Also clear from regStatus
+  if(appData.regStatus[key]?.status==='ko'){
+    if(useFirebase&&db) db.ref('hispania/regStatus/'+key).remove();
+    else delete appData.regStatus[key];
+  }
+  if(!useFirebase){saveLocal();renderAll();}
+  showToast('🔧 Reparado — regulador libre para reservar');
+}
+function updateNotifBadge(){
+  const k=getKoList(); const b=document.getElementById('nBadge');
+  b.style.display=k.length?'flex':'none'; b.textContent=k.length>9?'9+':k.length;
+}
+
+// ── SETTINGS ──
+let _pinEntry = '';
+function openSettings(){
+  // Show PIN gate
+  _pinEntry = '';
+  updatePinDots();
+  document.getElementById('pinError').textContent = '';
+  const po = document.getElementById('pinOverlay');
+  po.style.display = 'flex';
+}
+function closePinOverlay(){
+  document.getElementById('pinOverlay').style.display = 'none';
+  _pinEntry = '';
+  updatePinDots();
+}
+function pinKey(d){
+  if(_pinEntry.length >= 4) return;
+  _pinEntry += d;
+  updatePinDots();
+  if(_pinEntry.length === 4) setTimeout(checkPin, 120);
+}
+function pinDel(){
+  _pinEntry = _pinEntry.slice(0,-1);
+  updatePinDots();
+  document.getElementById('pinError').textContent = '';
+}
+function updatePinDots(){
+  document.querySelectorAll('.pdot').forEach((d,i)=>{
+    d.classList.toggle('filled', i < _pinEntry.length);
+  });
+}
+function checkPin(){
+  const stored = appData.settings.pin || '1234';
+  if(_pinEntry === stored){
+    document.getElementById('pinOverlay').style.display = 'none';
+    _pinEntry = '';
+    updatePinDots();
+    updateSettingsTags(); populateOsDropdowns();
+    document.getElementById('settingsOverlay').classList.add('open');
+  } else {
+    document.getElementById('pinError').textContent = 'PIN incorrecto — inténtalo de nuevo';
+    _pinEntry = '';
+    updatePinDots();
+    // Shake animation
+    const dots = document.getElementById('pinDots');
+    dots.style.animation = 'shake .35s ease';
+    setTimeout(()=>dots.style.animation='', 400);
+  }
+}
+function updateSettingsTags(){
+  if(appData.settings.managers){
+    document.getElementById('managerTags').innerHTML=appData.settings.managers.map((m,idx)=>`<div class="tag" style="background:var(--bl);color:var(--bt);box-shadow:0 2px 0 #85B7EB">${m}<button class="tx" style="color:var(--bt)" onclick="rmManager(${idx})">×</button></div>`).join('');
+  }
+  document.getElementById('instrTags').innerHTML=appData.settings.instructors.map((i,idx)=>`<div class="tag">${i}<button class="tx" onclick="rmInstructor(${idx})">×</button></div>`).join('');
+  document.getElementById('actTags').innerHTML=appData.settings.activities.map((a,idx)=>`<div class="tag">${a}<button class="tx" onclick="rmActivity(${idx})">×</button></div>`).join('');
+  document.getElementById('tipoTags').innerHTML=appData.settings.tipos.map((t,idx)=>`<div class="tag">${t.name} (${t.count})<button class="tx" onclick="rmTipo(${idx})">×</button></div>`).join('');
+  document.getElementById('osTags').innerHTML=(appData.settings.outOfService||[]).map(o=>`<div class="tag" style="background:var(--rb);color:var(--rt);box-shadow:0 2px 0 #c45050">${o.tipo} ${o.num}<button class="tx" style="color:var(--rt)" onclick="rmOutOfService('${o.tipo}',${o.num})">×</button></div>`).join('');
+}
+function addManager(){
+  const v=document.getElementById('nmInput').value.trim();
+  if(!v) return;
+  if(!appData.settings.managers) appData.settings.managers=[];
+  if(appData.settings.managers.includes(v)){ showToast('Ya existe'); return; }
+  appData.settings.managers.push(v);
+  document.getElementById('nmInput').value='';
+  updateSettingsTags();
+}
+function rmManager(i){ appData.settings.managers.splice(i,1); updateSettingsTags(); }
+function addInstructor(){ const v=document.getElementById('niInput').value.trim(); if(!v||appData.settings.instructors.includes(v))return; appData.settings.instructors.push(v); document.getElementById('niInput').value=''; updateSettingsTags(); populateFormSelects(); populateLoginSelect(); }
+function rmInstructor(i){ appData.settings.instructors.splice(i,1); updateSettingsTags(); populateFormSelects(); populateLoginSelect(); }
+function addActivity(){ const v=document.getElementById('naInput').value.trim(); if(!v||appData.settings.activities.includes(v))return; appData.settings.activities.push(v); document.getElementById('naInput').value=''; updateSettingsTags(); populateFormSelects(); }
+function rmActivity(i){ appData.settings.activities.splice(i,1); updateSettingsTags(); populateFormSelects(); }
+function addTipo(){
+  const n=document.getElementById('ntInput').value.trim();
+  const c=parseInt(document.getElementById('ntCount').value)||10;
+  if(!n||appData.settings.tipos.find(t=>t.name===n))return;
+  appData.settings.tipos.push({name:n,count:c});
+  document.getElementById('ntInput').value=''; document.getElementById('ntCount').value=20;
+  updateSettingsTags(); populateFormSelects(); populateOsDropdowns();
+}
+function rmTipo(i){ appData.settings.tipos.splice(i,1); updateSettingsTags(); populateFormSelects(); }
+function populateOsDropdowns(){
+  const ts=document.getElementById('osType'); ts.innerHTML='<option value="">Tipo...</option>';
+  appData.settings.tipos.forEach(t=>{ const o=document.createElement('option'); o.value=o.textContent=t.name; ts.appendChild(o); });
+}
+function populateOsNums(){
+  const tipo=document.getElementById('osType').value;
+  const t=appData.settings.tipos.find(x=>x.name===tipo);
+  const ns=document.getElementById('osNum'); ns.innerHTML='<option value="">Nº...</option>';
+  if(!t) return;
+  for(let i=1;i<=t.count;i++){
+    const o=document.createElement('option'); o.value=i; o.textContent=i; ns.appendChild(o);
+  }
+}
+function addOutOfService(){
+  const tipo=document.getElementById('osType').value;
+  const num=parseInt(document.getElementById('osNum').value);
+  if(!tipo||!num) return;
+  if(!appData.settings.outOfService) appData.settings.outOfService=[];
+  if(appData.settings.outOfService.find(o=>o.tipo===tipo&&o.num===num)) return;
+  appData.settings.outOfService.push({tipo,num});
+  const key=tipo+'_'+num;
+  if(useFirebase&&db) db.ref('hispania/regStatus/'+key).set({status:'out_of_service',setAt:Date.now()});
+  else{ appData.regStatus[key]={status:'out_of_service'}; }
+  updateSettingsTags(); populateOsDropdowns();
+}
+function rmOutOfService(tipo,num){
+  if(!appData.settings.outOfService) return;
+  appData.settings.outOfService=appData.settings.outOfService.filter(o=>!(o.tipo===tipo&&o.num===num));
+  const key=tipo+'_'+num;
+  if(useFirebase&&db) db.ref('hispania/regStatus/'+key).remove();
+  else{ delete appData.regStatus[key]; }
+  updateSettingsTags();
+  if(!useFirebase){saveLocal();renderAll();}
+}
+function changePin(){
+  const v = String(document.getElementById('pinNewInput').value).trim();
+  if(v.length !== 4 || !/^\d{4}$/.test(v)){ showToast('El PIN debe tener exactamente 4 dígitos'); return; }
+  if(!appData.settings) appData.settings = {};
+  appData.settings.pin = v;
+  document.getElementById('pinNewInput').value = '';
+  if(useFirebase&&db) db.ref('hispania/settings/pin').set(v);
+  else saveLocal();
+  showToast('🔒 PIN cambiado correctamente');
+}
+function saveSettings(){
+  if(useFirebase&&db) db.ref('hispania/settings').set(appData.settings);
+  // Deep merge managers default
+  if(!appData.settings.managers||!appData.settings.managers.length) appData.settings.managers=['Valentín'];
+  else{ saveLocal(); renderAll(); }
+  populateFormSelects(); populateLoginSelect();
+  showToast('✅ Configuración guardada');
+}
+
+// ════════════════════════════════════════════
+// ── CHAT SYSTEM ──
+// ════════════════════════════════════════════
+let chatTab = 'inbox';
+let chatListener = null;
+
+function openChat(){
+  document.getElementById('chatOverlay').classList.add('open');
+  document.getElementById('chatUserChip').textContent = currentUser;
+  populateChatToSel();
+  renderChatInbox();
+  renderChatSent();
+  markAllRead();
+}
+function closeChat(){ document.getElementById('chatOverlay').classList.remove('open'); }
+
+function switchChatTab(tab){
+  chatTab = tab;
+  ['inbox','sent','compose'].forEach(t=>{
+    document.getElementById('ctab-'+t).classList.toggle('on', t===tab);
+    const area = document.getElementById('chat-'+t+'-area');
+    if(area) area.style.display = t===tab ? (t==='compose'?'block':'') : 'none';
+  });
+  // chat-list areas need flex for scrolling — set display correctly
+  ['inbox','sent'].forEach(t=>{
+    const a=document.getElementById('chat-'+t+'-area');
+    if(a) a.style.display = t===tab ? 'block' : 'none';
+  });
+  if(tab==='inbox') markAllRead();
+}
+
+function populateChatToSel(){
+  const sel = document.getElementById('chatToSel');
+  sel.innerHTML = '<option value="">— Selecciona compañero —</option>';
+  appData.settings.instructors
+    .filter(i => i !== currentUser)
+    .forEach(i => {
+      const o = document.createElement('option');
+      o.value = o.textContent = i;
+      sel.appendChild(o);
+    });
+}
+
+// ── SEND MESSAGE ──
+function sendMessage(){
+  const to = document.getElementById('chatToSel').value;
+  const text = document.getElementById('chatMsgInput').value.trim();
+  if(!to){ showToast('Selecciona a quién enviar el mensaje'); return; }
+  if(!text){ showToast('Escribe un mensaje antes de enviar'); return; }
+
+  const msg = {
+    id: uuid(),
+    from: currentUser,
+    to,
+    text,
+    timestamp: Date.now(),
+    read: false
+  };
+
+  if(useFirebase && db){
+    db.ref('hispania/messages/'+msg.id).set(msg);
+  } else {
+    if(!appData.messages) appData.messages = {};
+    appData.messages[msg.id] = msg;
+    saveLocal();
+  }
+
+  document.getElementById('chatMsgInput').value = '';
+  showToast('✉️ Mensaje enviado a '+to);
+  switchChatTab('sent');
+  renderChatSent();
+}
+
+// ── RENDER INBOX ──
+function renderChatInbox(){
+  const msgs = Object.values(appData.messages||{})
+    .filter(m => m.to === currentUser)
+    .sort((a,b) => b.timestamp - a.timestamp);
+
+  const el = document.getElementById('chat-inbox-area');
+  if(!msgs.length){
+    el.innerHTML = '<div class="empty"><div class="empty-ico">📭</div><p>Sin mensajes recibidos.</p></div>';
+    return;
+  }
+  el.innerHTML = msgs.map(m => {
+    const isUnread = !m.read;
+    const timeStr = new Date(m.timestamp).toLocaleDateString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    return `<div class="msg-card received${isUnread?' unread':''}">
+      ${isUnread ? '<div class="msg-unread-dot"></div>' : ''}
+      <div class="msg-from">👤 ${m.from}</div>
+      <div class="msg-time">📅 ${timeStr}</div>
+      <div class="msg-text" style="margin-top:8px">${escHtml(m.text)}</div>
+      <button class="msg-delete" onclick="deleteMessage('${m.id}')" title="Eliminar">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+// ── RENDER SENT ──
+function renderChatSent(){
+  const msgs = Object.values(appData.messages||{})
+    .filter(m => m.from === currentUser)
+    .sort((a,b) => b.timestamp - a.timestamp);
+
+  const el = document.getElementById('chat-sent-area');
+  if(!msgs.length){
+    el.innerHTML = '<div class="empty"><div class="empty-ico">📤</div><p>Sin mensajes enviados.</p></div>';
+    return;
+  }
+  el.innerHTML = msgs.map(m => {
+    const timeStr = new Date(m.timestamp).toLocaleDateString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    const readStatus = m.read
+      ? '<span style="color:var(--gb);font-size:11px;font-weight:700">✓✓ Leído</span>'
+      : '<span style="color:var(--mut);font-size:11px;font-weight:600">✓ Enviado</span>';
+    return `<div class="msg-card sent">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+        <div class="msg-from" style="color:var(--gd)">Para: ${m.to}</div>
+        ${readStatus}
+      </div>
+      <div class="msg-time">📅 ${timeStr}</div>
+      <div class="msg-text" style="margin-top:8px">${escHtml(m.text)}</div>
+      <button class="msg-delete" onclick="deleteMessage('${m.id}')" title="Eliminar">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+// ── MARK ALL READ ──
+function markAllRead(){
+  const unread = Object.values(appData.messages||{})
+    .filter(m => m.to===currentUser && !m.read);
+  if(!unread.length) return;
+  unread.forEach(m => {
+    if(useFirebase&&db) db.ref('hispania/messages/'+m.id+'/read').set(true);
+    else if(appData.messages&&appData.messages[m.id]) appData.messages[m.id].read = true;
+  });
+  if(!useFirebase){ saveLocal(); }
+  updateChatBadge();
+}
+
+// ── DELETE MESSAGE ──
+function deleteMessage(id){
+  if(useFirebase&&db) db.ref('hispania/messages/'+id).remove();
+  else{ delete appData.messages[id]; saveLocal(); }
+  renderChatInbox(); renderChatSent(); updateChatBadge();
+}
+
+// ── BADGE ──
+function updateChatBadge(){
+  const unread = Object.values(appData.messages||{})
+    .filter(m => m.to===currentUser && !m.read).length;
+  const badge = document.getElementById('chatBadge');
+  badge.style.display = unread > 0 ? 'flex' : 'none';
+  badge.textContent = unread > 9 ? '9+' : unread;
+  // Update inbox tab label
+  const lbl = document.getElementById('inboxCountLbl');
+  if(lbl) lbl.innerHTML = unread > 0 ? `<span class="unread-badge-pill" style="font-size:9px;padding:1px 6px">${unread}</span>` : '';
+}
+
+function escHtml(t){
+  return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+// ── FIREBASE MESSAGES LISTENER ──
+function initChatListener(){
+  if(!useFirebase||!db) return;
+  if(chatListener) chatListener.off();
+  chatListener = db.ref('hispania/messages');
+  chatListener.on('value', snap => {
+    appData.messages = snap.val() || {};
+    saveLocal();
+    updateChatBadge();
+    // If chat is open, refresh current tab
+    if(document.getElementById('chatOverlay').classList.contains('open')){
+      renderChatInbox(); renderChatSent();
+    }
+  });
+}
+
+
+// ═══ HISTORIAL ═══
+let histTipoSel = '';
+let histUnitSel = null;
+
+function initHistTipo(){
+  if(!appData.settings || !appData.settings.tipos || !appData.settings.tipos.length) return;
+  if(!histTipoSel) histTipoSel = appData.settings.tipos[0].name;
+}
+
+function renderHistTipoRow(){
+  const row = document.getElementById('histTipoRow');
+  if(!row) return;
+  row.innerHTML = '';
+  const tipos = appData.settings && appData.settings.tipos;
+  if(!tipos || !tipos.length) return;
+  tipos.forEach(t=>{
+    const div = document.createElement('div');
+    div.className = 'ttab' + (t.name === histTipoSel ? ' on' : '');
+    div.textContent = t.name;
+    div.onclick = () => { histTipoSel = t.name; renderHistPage(); };
+    row.appendChild(div);
+  });
+  const add = document.createElement('div');
+  add.className = 'ttab add';
+  add.textContent = '+ Tipo';
+  add.onclick = openSettings;
+  row.appendChild(add);
+}
+
+function renderHistGrid(){
+  const grid = document.getElementById('histGrid');
+  if(!grid) return;
+  const tipos = appData.settings && appData.settings.tipos;
+  if(!tipos || !tipos.length){ grid.innerHTML = '<p style="color:var(--mut);font-size:13px">No hay tipos configurados.</p>'; return; }
+  const tipo = tipos.find(t=>t.name===histTipoSel) || tipos[0];
+  histTipoSel = tipo.name;
+  const sub = document.getElementById('histSubtitle');
+  if(sub) sub.textContent = tipo.name + ' — ' + tipo.count + ' unidades · pulsa para ver historial';
+  grid.innerHTML = '';
+  for(let i=1; i<=tipo.count; i++){
+    const safeKey = (histTipoSel+'_unit_'+i).replace(/ /g,'_');
+    const raw = appData.historial && appData.historial[safeKey];
+    let records = [];
+    if(raw){
+      records = Array.isArray(raw) ? raw : Object.values(raw);
+      records = records.filter(r=>r&&r.type);
+    }
+    const lastRec = records.length ? records.sort((a,b)=>(a.ts||0)-(b.ts||0))[records.length-1] : null;
+    const st = getItemState(histTipoSel, i);
+    let cls = 'hreg ';
+    if(st.state === 'ko') cls += 'hreg-ko';
+    else if(!lastRec) cls += 'hreg-new';
+    else if(lastRec.type === 'revision') cls += 'hreg-ok';
+    else if(lastRec.type === 'reparacion' || lastRec.type === 'preventivo') cls += 'hreg-am';
+    else if(lastRec.type === 'averia') cls += 'hreg-ko';
+    else cls += 'hreg-ok';
+    const el = document.createElement('div');
+    el.className = cls;
+    el.innerHTML = '<span class="hreg-n">' + i + '</span>' + (records.length ? '<span class="hreg-dot">●</span>' : '');
+    el.onclick = () => openHistDetail(histTipoSel, i);
+    grid.appendChild(el);
+  }
+}
+
+function renderHistPage(){
+  renderHistTipoRow();
+  renderHistGrid();
+  // Show fixed scroll hint for 2.5 seconds
+  const hint = document.getElementById('scrollHint');
+  if(hint){
+    hint.style.display = 'flex';
+    clearTimeout(window._hintT);
+    window._hintT = setTimeout(()=>{ hint.style.display='none'; }, 2500);
+  }
+}
+
+function openHistDetail(tipo, num){
+  histUnitSel = {tipo, num};
+  document.getElementById('histListView').style.display = 'none';
+  document.getElementById('histDetailView').style.display = 'block';
+  document.getElementById('histDetailTitle').textContent = tipo + ' ' + num;
+  document.getElementById('histRecDate').value = today();
+  renderHistTimeline();
+}
+
+function histBack(){
+  histUnitSel = null;
+  document.getElementById('histDetailView').style.display = 'none';
+  document.getElementById('histListView').style.display = 'block';
+}
+
+function renderHistTimeline(){
+  if(!histUnitSel) return;
+  const safeKey = (histUnitSel.tipo+'_unit_'+histUnitSel.num).replace(/ /g,'_');
+  const raw = appData.historial && appData.historial[safeKey];
+  let records = [];
+  if(raw){ records = Array.isArray(raw) ? raw : Object.values(raw); records = records.filter(r=>r&&r.type); }
+  const countEl = document.getElementById('histDetailCount');
+  if(countEl) countEl.textContent = records.length + ' registro' + (records.length!==1?'s':'');
+  const tl = document.getElementById('histTimeline');
+  if(!tl) return;
+  if(!records.length){
+    tl.innerHTML = '<div style="text-align:center;padding:24px 0;color:var(--mut);font-size:13px">Sin registros aún.<br>Añade el primero arriba.</div>';
+    return;
+  }
+  const typeMap = {
+    revision:  {icon:'✅', label:'Revisión anual',         cls:'ht-ok'},
+    reparacion:{icon:'🔧', label:'Reparación',              cls:'ht-rep'},
+    averia:    {icon:'⚡', label:'Avería',                  cls:'ht-ko'},
+    preventivo:{icon:'🛠️', label:'Mantenimiento preventivo',cls:'ht-prev'},
+    otro:      {icon:'📝', label:'Otro',                    cls:'ht-otro'}
+  };
+  const sorted = [...records].sort((a,b)=>(b.ts||0)-(a.ts||0));
+  tl.innerHTML = sorted.map(r=>{
+    const tm = typeMap[r.type] || {icon:'📝', label:r.type, cls:'ht-otro'};
+    return '<div class="ht-item">'
+      + '<div class="ht-dot '+tm.cls+'"></div>'
+      + '<div class="ht-card">'
+      + '<div class="ht-date">'+fmtDate(r.date)+(r.by?' · '+r.by:'')+'</div>'
+      + '<div class="ht-type">'+tm.icon+' '+tm.label+'</div>'
+      + (r.notes ? '<div class="ht-note">"'+r.notes+'"</div>' : '')
+      + '</div></div>';
+  }).join('');
+}
+
+function saveHistRecord(){
+  if(!histUnitSel) return;
+  const type  = document.getElementById('histRecType').value;
+  const date  = document.getElementById('histRecDate').value || today();
+  const notes = document.getElementById('histRecNotes').value.trim();
+  if(!type){ showToast('Selecciona el tipo de registro'); return; }
+  const safeKey = (histUnitSel.tipo+'_unit_'+histUnitSel.num).replace(/ /g,'_');
+  if(!appData.historial) appData.historial = {};
+  if(!appData.historial[safeKey]) appData.historial[safeKey] = {};
+  const record = {id:uuid(), type, date, notes, by:currentUser, ts:Date.now()};
+  appData.historial[safeKey][record.id] = record;
+  if(useFirebase&&db) db.ref('hispania/historial/'+safeKey+'/'+record.id).set(record);
+  else saveLocal();
+  document.getElementById('histRecNotes').value = '';
+  renderHistTimeline();
+  showToast('✅ Registro guardado');
+}
+
+
+function clearAndReload(){
+  try{
+    localStorage.clear();
+    sessionStorage.clear();
+  }catch(e){}
+  location.href = location.href.split('?')[0] + '?reset=' + Date.now();
+}
+// ── BOOT ──
+loadLocal();
+populateLoginSelect();
+
+// ═══ PWA: inyectar manifest dinamicamente ═══
+(function(){
+  const manifest = {
+    name: "Mantenimiento de Equipo Hispania",
+    short_name: "Hispania",
+    description: "Control de equipo de buceo — Buceo Hispania",
+    start_url: "./",
+    display: "standalone",
+    orientation: "portrait",
+    background_color: "#085041",
+    theme_color: "#0F6E56",
+    icons:[{src:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",sizes:"512x512",type:"image/png",purpose:"any maskable"}]
+  };
+  const blob = new Blob([JSON.stringify(manifest)],{type:'application/json'});
+  document.getElementById('pwaManifest').setAttribute('href', URL.createObjectURL(blob));
+})();
+
+// ═══ PWA: Service Worker offline ═══
+if('serviceWorker' in navigator){
+  const sw = `
+const CACHE='hispania-v2';
+const OFFLINE_URL='./';
+self.addEventListener('install',e=>{
+  e.waitUntil(caches.open(CACHE).then(c=>c.addAll([OFFLINE_URL])));
+  self.skipWaiting();
+});
+self.addEventListener('activate',e=>{
+  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
+  self.clients.claim();
+});
+self.addEventListener('fetch',e=>{
+  if(e.request.mode==='navigate'){
+    e.respondWith(fetch(e.request).catch(()=>caches.match(OFFLINE_URL)));
+  } else {
+    e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>new Response(''))));
+  }
+});
+  `;
+  const blob = new Blob([sw],{type:'text/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+}
+
+// ═══ PWA: Banner instalar Android ═══
+let _dP=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault(); _dP=e;
+  if(window.matchMedia('(display-mode:standalone)').matches) return;
+  setTimeout(()=>{
+    const b=document.createElement('div');
+    b.style.cssText='position:fixed;bottom:92px;left:50%;transform:translateX(-50%);background:#0F6E56;color:#fff;padding:11px 20px;border-radius:24px;font-size:13px;font-weight:700;cursor:pointer;z-index:600;box-shadow:0 4px 16px rgba(0,0,0,.35);white-space:nowrap;border:1.5px solid #5DCAA5';
+    b.innerHTML='📲 Instalar app en este móvil';
+    b.onclick=()=>{ _dP.prompt(); _dP.userChoice.then(()=>{b.remove();_dP=null;}); };
+    document.body.appendChild(b);
+    setTimeout(()=>{if(b.parentNode)b.remove();},14000);
+  },2500);
+});
+
+// ═══ PWA: instrucciones iPhone (solo si Safari iOS) ═══
+(function(){
+  const isIos=()=>/iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+  const isStandalone=()=>window.navigator.standalone===true;
+  if(isIos()&&!isStandalone()){
+    setTimeout(()=>{
+      const tip=document.createElement('div');
+      tip.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#0F6E56;color:#fff;padding:14px 18px 28px;font-size:13px;font-weight:600;text-align:center;z-index:600;border-top:2px solid #5DCAA5;line-height:1.6';
+      tip.innerHTML='Para instalar en iPhone:<br>Pulsa <b>compartir</b> ⬆️ → <b>"Añadir a pantalla de inicio"</b> 📲<br><span style="font-size:11px;opacity:.8">Así funciona como app nativa sin App Store</span><br><button onclick="this.parentNode.remove()" style="margin-top:10px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;padding:6px 18px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer">Entendido ✓</button>';
+      document.body.appendChild(tip);
+    },3500);
+  }
+})();
+
+</script>
+</body>
+</html>
+<!--
+════════════════════════════════════════════════════════════════
+  INSTRUCCIONES FIREBASE (5 minutos)
+  1. https://console.firebase.google.com → Crear proyecto hispania
+  2. Realtime Database → Crear base de datos → europe-west1
+     → Empezar en modo de prueba
+  3. ⚙️ Configuración del proyecto → Tus apps → Web (</>)
+     → Registrar app → Copiar el objeto firebaseConfig
+  4. Pegar en FIREBASE_CONFIG arriba (líneas iniciales del script)
+  5. Realtime Database → Reglas → Publicar:
+     {
+       "rules": {
+         "hispania": { ".read": true, ".write": true }
+       }
+     }
+
+  CONVERTIR A APK (Android):
+  npm i @capacitor/core @capacitor/cli @capacitor/android
+  npx cap init "Mantenimiento Hispania" "com.hispania.equipo"
+  Copiar este HTML como www/index.html
+  npx cap add android
+  npx cap open android   ← abre Android Studio → Build APK
+════════════════════════════════════════════════════════════════
+-->
