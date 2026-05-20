@@ -295,7 +295,7 @@ textarea.finput{resize:none;height:78px}
 </div>
 
 <!-- LOGIN -->
-<div id="sl" class="screen">
+<div id="sl" class="screen active">
   <div class="login-w">
     <div class="login-logo">
       <span class="login-ic">⚓</span>
@@ -464,14 +464,19 @@ function closeMod(id){document.getElementById(id).classList.remove('on')}
 
 /* ── FIREBASE INIT ── */
 window.addEventListener('DOMContentLoaded',()=>{
-  try{
-    firebase.initializeApp(FB);
-    db=firebase.database();
-    showS('sl');
-  }catch(e){
-    toast('Error Firebase: '+e.message,'er',8000);
-    showS('sl');
-  }
+  // Login already visible, init Firebase in background
+  setTimeout(()=>{
+    try{
+      if(typeof firebase==='undefined'){
+        toast('Error: Firebase SDK no cargó. Comprueba la conexión.','er',8000);
+        return;
+      }
+      if(!firebase.apps.length) firebase.initializeApp(FB);
+      db=firebase.database();
+    }catch(e){
+      toast('Firebase: '+e.message,'er',8000);
+    }
+  },500);
 });
 
 /* ── LOGIN ── */
@@ -481,6 +486,7 @@ function doLogin(){
   const err=document.getElementById('l-err');
   err.classList.remove('on');
   if(!u||!p){err.textContent='Rellena usuario y contraseña';err.classList.add('on');return;}
+  if(!db){err.textContent='Conectando con Firebase... espera unos segundos e inténtalo de nuevo.';err.classList.add('on');return;}
   if(BOSS.includes(u)&&p===BPASS){
     CU={role:'boss',name:u.charAt(0).toUpperCase()+u.slice(1)};
     document.getElementById('boss-badge').textContent=CU.name.toUpperCase();
